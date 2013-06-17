@@ -24,7 +24,7 @@
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
 
-		<sonar.version>3.4</sonar.version>
+		<sonar.version>3.5</sonar.version>
 		<sonar.pluginClass>de.shadowhunt.sonar.plugins.ignorecode.IgnoreCodePlugin</sonar.pluginClass>
 
 		<sonar.java.coveragePlugin>jacoco</sonar.java.coveragePlugin>
