@@ -12,23 +12,26 @@ import org.sonar.api.rules.Violation;
 import org.sonar.api.rules.ViolationFilter;
 import org.sonar.api.utils.WildcardPattern;
 
-import de.shadowhunt.sonar.plugins.ignorecode.model.IgnorePattern;
-import de.shadowhunt.sonar.plugins.ignorecode.util.PatternDecoder;
+import de.shadowhunt.sonar.plugins.ignorecode.model.ViolationPattern;
+import de.shadowhunt.sonar.plugins.ignorecode.util.ViolationPatternDecoder;
 
 public class IgnoreViolationsFilter implements ViolationFilter {
 
+	public static final String CONFIG_FILE = "sonar.switchoffviolations.configFile";
+
 	private static final Logger LOGGER = LoggerFactory.getLogger(IgnoreViolationsFilter.class);
 
-	private final List<IgnorePattern> patterns;
+	private final List<ViolationPattern> patterns;
 
 	public IgnoreViolationsFilter(final Configuration configuration) {
-		patterns = PatternDecoder.loadIgnorePatterns(configuration);
+		final String fileLocation = configuration.getString(CONFIG_FILE);
+		patterns = ViolationPatternDecoder.loadIgnorePatterns(fileLocation);
 	}
 
 	@Override
 	public boolean isIgnored(final Violation violation) {
 		final boolean debugEnabled = LOGGER.isDebugEnabled();
-		for (final IgnorePattern pattern : patterns) {
+		for (final ViolationPattern pattern : patterns) {
 			if (match(violation, pattern)) {
 				if (debugEnabled) {
 					LOGGER.debug("Violation " + violation + " switched off by " + pattern);
@@ -39,7 +42,7 @@ public class IgnoreViolationsFilter implements ViolationFilter {
 		return false;
 	}
 
-	public boolean match(final Violation violation, final IgnorePattern pattern) {
+	public boolean match(final Violation violation, final ViolationPattern pattern) {
 		boolean match = matchResource(violation.getResource(), pattern.getResourcePattern());
 		match = match && matchRule(violation.getRule(), pattern.getRulePattern());
 

@@ -1,26 +1,46 @@
 package de.shadowhunt.sonar.plugins.ignorecode.model;
 
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
+import java.util.Set;
 
-public class CovarageValue {
+public class LineValuePair {
 
-	public static List<CovarageValue> parseDataString(final String data) {
-		final List<CovarageValue> result = new ArrayList<CovarageValue>();
+	public static List<LineValuePair> parseDataString(final String data) {
+		final List<LineValuePair> result = new ArrayList<LineValuePair>();
 		for (final String parts : data.split(";")) {
 			final String[] pair = parts.split("=");
 			if ((pair != null) && (pair.length == 2)) {
 				final int lineNumber = Integer.parseInt(pair[0]);
 				final int value = Integer.parseInt(pair[1]);
-				result.add(new CovarageValue(lineNumber, value));
+				result.add(new LineValuePair(lineNumber, value));
 			}
 		}
 		return result;
 	}
 
-	public static String toDataString(final List<CovarageValue> lineValues) {
+	public static List<LineValuePair> removeIgnores(final List<LineValuePair> covarageValues, final Set<Integer> ignores) {
+		for (final Iterator<LineValuePair> it = covarageValues.iterator(); it.hasNext();) {
+			final LineValuePair covarageValue = it.next();
+			if (ignores.contains(covarageValue.getLineNumber())) {
+				it.remove();
+			}
+		}
+		return covarageValues;
+	}
+
+	public static int sumValues(final List<LineValuePair> covarageValues) {
+		int sum = 0;
+		for (final LineValuePair covarageValue : covarageValues) {
+			sum += covarageValue.getValue();
+		}
+		return sum;
+	}
+
+	public static String toDataString(final List<LineValuePair> lineValues) {
 		final StringBuilder sb = new StringBuilder();
-		for (final CovarageValue lineValue : lineValues) {
+		for (final LineValuePair lineValue : lineValues) {
 			sb.append(lineValue.lineNumber);
 			sb.append('=');
 			sb.append(lineValue.value);
@@ -34,7 +54,7 @@ public class CovarageValue {
 
 	private int value;
 
-	public CovarageValue(final int lineNumber, final int value) {
+	public LineValuePair(final int lineNumber, final int value) {
 		this.lineNumber = lineNumber;
 		this.value = value;
 	}
@@ -50,7 +70,7 @@ public class CovarageValue {
 		if (getClass() != obj.getClass()) {
 			return false;
 		}
-		final CovarageValue other = (CovarageValue) obj;
+		final LineValuePair other = (LineValuePair) obj;
 		if (lineNumber != other.lineNumber) {
 			return false;
 		}
@@ -84,7 +104,7 @@ public class CovarageValue {
 	@Override
 	public String toString() {
 		final StringBuilder builder = new StringBuilder();
-		builder.append("LineValue [lineNumber=");
+		builder.append("LineValuePair [lineNumber=");
 		builder.append(lineNumber);
 		builder.append(", value=");
 		builder.append(value);

@@ -1,89 +1,114 @@
 package de.shadowhunt.sonar.plugins.ignorecode.batch;
 
 import java.util.Arrays;
-import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 import org.apache.commons.configuration.Configuration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.sonar.api.batch.Decorator;
 import org.sonar.api.batch.DecoratorContext;
 import org.sonar.api.batch.DependsUpon;
 import org.sonar.api.measures.CoreMetrics;
 import org.sonar.api.measures.Measure;
 import org.sonar.api.measures.Metric;
-import org.sonar.api.resources.Project;
 import org.sonar.api.resources.Resource;
 import org.sonar.api.resources.ResourceUtils;
+import org.sonar.batch.index.MeasurePersister;
 
-import de.shadowhunt.sonar.plugins.ignorecode.model.CovarageValue;
-import de.shadowhunt.sonar.plugins.ignorecode.util.MetricUtils;
+import de.shadowhunt.sonar.plugins.ignorecode.model.LineValuePair;
 
 /**
  * Generated code as identified by the coverage.ignore, must not be covered by any unit tests.
  * Therefore the {@link IgnoreMissingCoverageDecorator} goes through all coverage metrics and removes
  * all entries for identified sources
  */
-public class IgnoreMissingCoverageDecorator implements Decorator {
+public class IgnoreMissingCoverageDecorator extends AbstractDecorator {
+
+	public static final String CONFIG_FILE = "sonar.ignorecoverage.configFile";
 
 	private static final Logger LOGGER = LoggerFactory.getLogger(IgnoreMissingCoverageDecorator.class);
 
-	private static void filterConditionCoverage(final DecoratorContext context, final Set<Integer> ignores) {
-		final List<CovarageValue> conditionsByLines = removeIgnores(context, CoreMetrics.CONDITIONS_BY_LINE, ignores);
-		context.saveMeasure(new Measure(CoreMetrics.CONDITIONS_BY_LINE, CovarageValue.toDataString(conditionsByLines)));
+	private static void filterConditionCoverage(final DecoratorContext context, final MeasurePersister persister, final Set<Integer> ignores) {
+		@SuppressWarnings("rawtypes")
+		final Resource resource = context.getResource();
 
-		final int toCover = sumValues(conditionsByLines);
-		context.saveMeasure(new Measure(CoreMetrics.CONDITIONS_TO_COVER, (double) toCover));
+		final List<LineValuePair> conditionsByLines;
+		{
+			final Measure measure = context.getMeasure(CoreMetrics.CONDITIONS_BY_LINE);
+			conditionsByLines = LineValuePair.parseDataString(measure.getData());
+			LineValuePair.removeIgnores(conditionsByLines, ignores);
+			measure.setData(LineValuePair.toDataString(conditionsByLines));
+			persister.saveMeasure(resource, measure);
+		}
 
-		final List<CovarageValue> covered = removeIgnores(context, CoreMetrics.COVERED_CONDITIONS_BY_LINE, ignores);
-		context.saveMeasure(new Measure(CoreMetrics.COVERED_CONDITIONS_BY_LINE, CovarageValue.toDataString(covered)));
+		final int toCover = LineValuePair.sumValues(conditionsByLines);
+		{
+			final Measure measure = context.getMeasure(CoreMetrics.CONDITIONS_TO_COVER);
+			measure.setValue((double) toCover);
+			persister.saveMeasure(resource, measure);
+		}
 
-		final int uncovered = (toCover == 0) ? 0 : (toCover - sumValues(covered));
-		context.saveMeasure(new Measure(CoreMetrics.UNCOVERED_CONDITIONS, (double) uncovered));
+		final List<LineValuePair> covered;
+		{
+			final Measure measure = context.getMeasure(CoreMetrics.COVERED_CONDITIONS_BY_LINE);
+			covered = LineValuePair.parseDataString(measure.getData());
+			LineValuePair.removeIgnores(covered, ignores);
+			measure.setData(LineValuePair.toDataString(covered));
+			persister.saveMeasure(resource, measure);
+		}
+
+		final int uncovered = (toCover == 0) ? 0 : (toCover - LineValuePair.sumValues(covered));
+		{
+			final Measure measure = context.getMeasure(CoreMetrics.UNCOVERED_CONDITIONS);
+			measure.setValue((double) uncovered);
+			persister.saveMeasure(resource, measure);
+		}
 	}
 
-	private static void filterLineCoverage(final DecoratorContext context, final Set<Integer> ignores) {
-		final List<CovarageValue> coverageByLines = removeIgnores(context, CoreMetrics.COVERAGE_LINE_HITS_DATA, ignores);
-		context.saveMeasure(new Measure(CoreMetrics.COVERAGE_LINE_HITS_DATA, CovarageValue.toDataString(coverageByLines)));
+	private static void filterLineCoverage(final DecoratorContext context, final MeasurePersister persister, final Set<Integer> ignores) {
+		@SuppressWarnings("rawtypes")
+		final Resource resource = context.getResource();
+
+		final List<LineValuePair> coverageByLines;
+		{
+			final Measure measure = context.getMeasure(CoreMetrics.COVERAGE_LINE_HITS_DATA);
+			coverageByLines = LineValuePair.parseDataString(measure.getData());
+			LineValuePair.removeIgnores(coverageByLines, ignores);
+			measure.setData(LineValuePair.toDataString(coverageByLines));
+			persister.saveMeasure(resource, measure);
+		}
 
 		final int toCover = coverageByLines.size();
-		context.saveMeasure(new Measure(CoreMetrics.LINES_TO_COVER, (double) toCover));
-
-		final int covered = (toCover == 0) ? 0 : sumValues(coverageByLines);
-		context.saveMeasure(new Measure(CoreMetrics.LINE_COVERAGE, (double) covered));
-	}
-
-	private static List<CovarageValue> removeIgnores(final DecoratorContext context, final Metric metric, final Set<Integer> ignores) {
-		final List<CovarageValue> covarageValues = MetricUtils.getCovarageValues(context, metric);
-		for (final Iterator<CovarageValue> it = covarageValues.iterator(); it.hasNext();) {
-			final CovarageValue covarageValue = it.next();
-			if (ignores.contains(covarageValue.getLineNumber())) {
-				it.remove();
-			}
+		{
+			final Measure measure = context.getMeasure(CoreMetrics.CONDITIONS_TO_COVER);
+			measure.setValue((double) toCover);
+			persister.saveMeasure(resource, measure);
 		}
-		return covarageValues;
-	}
 
-	private static int sumValues(final List<CovarageValue> covarageValues) {
-		int sum = 0;
-		for (final CovarageValue covarageValue : covarageValues) {
-			sum += covarageValue.getValue();
+		final int covered = (toCover == 0) ? 0 : LineValuePair.sumValues(coverageByLines);
+		{
+			final Measure measure = context.getMeasure(CoreMetrics.LINE_COVERAGE);
+			measure.setValue((double) covered);
+			persister.saveMeasure(resource, measure);
 		}
-		return sum;
 	}
 
-	private final Map<String, Set<Integer>> ignores;
+	private final Configuration configuration;
+
+	private final MeasurePersister persister;
 
 	/**
 	 * Create a new {@link IgnoreMissingCoverageDecorator} that removes all coverage metrics for ignored code
-	 * @param configuration project {@link Configuration} (retrieved by the container via injection) 
+	 * @param persister {@link MeasurePersister} save the updated {@link Measure}s to the database (not supported via {@link DecoratorContext})
+	 * @param configuration project {@link Configuration}
 	 */
-	public IgnoreMissingCoverageDecorator(final Configuration configuration) {
-		ignores = new HashMap<String, Set<Integer>>();
+	public IgnoreMissingCoverageDecorator(final MeasurePersister persister, final Configuration configuration) {
+		super();
+		this.persister = persister;
+		this.configuration = configuration;
+
+		loadIgnores();
 	}
 
 	@Override
@@ -93,41 +118,35 @@ public class IgnoreMissingCoverageDecorator implements Decorator {
 		}
 
 		final String resourceKey = resource.getKey();
-		LOGGER.info("processing resource with key: " + resourceKey); // debug TODO
+		LOGGER.debug("processing resource with key: " + resourceKey);
 		final Set<Integer> resourceIgnores = ignores.get(resourceKey);
 		if ((resourceIgnores == null) || resourceIgnores.isEmpty()) {
-			LOGGER.info("no coverage data must be filtered"); // debug TODO 
+			LOGGER.debug("no coverage data must be filtered");
 			return;
 		}
 
 		if (context.getMeasure(CoreMetrics.COVERAGE_LINE_HITS_DATA) == null) {
-			LOGGER.info("no coverage data available"); // debug TODO
+			LOGGER.debug("no coverage data available");
 			return;
 		}
 
-		filterLineCoverage(context, resourceIgnores);
-		filterConditionCoverage(context, resourceIgnores);
+		filterLineCoverage(context, persister, resourceIgnores);
+		filterConditionCoverage(context, persister, resourceIgnores);
 	}
 
 	@DependsUpon
 	public List<Metric> dependsUponMetrics() {
-		return Arrays.asList(//
-		CoreMetrics.LINES_TO_COVER, //
-				CoreMetrics.LINES_TO_COVER, //
+		return Arrays.asList(CoreMetrics.CONDITIONS_BY_LINE, //
 				CoreMetrics.CONDITIONS_TO_COVER, //
-				CoreMetrics.UNCOVERED_CONDITIONS, //
 				CoreMetrics.COVERAGE_LINE_HITS_DATA, //
 				CoreMetrics.COVERED_CONDITIONS_BY_LINE, //
-				CoreMetrics.CONDITIONS_BY_LINE);
+				CoreMetrics.LINES_TO_COVER, //
+				CoreMetrics.LINE_COVERAGE, //
+				CoreMetrics.UNCOVERED_CONDITIONS);
 	}
 
 	@Override
-	public boolean shouldExecuteOnProject(final Project project) {
-		return true; // TODO
-	}
-
-	@Override
-	public String toString() {
-		return getClass().getSimpleName();
+	protected String getConfigurationLocation() {
+		return configuration.getString(CONFIG_FILE);
 	}
 }

@@ -11,23 +11,20 @@ import java.util.regex.Pattern;
 
 import javax.annotation.CheckForNull;
 
-import org.apache.commons.configuration.Configuration;
 import org.apache.commons.lang.StringUtils;
 import org.sonar.api.utils.SonarException;
 
-import de.shadowhunt.sonar.plugins.ignorecode.model.IgnorePattern;
+import de.shadowhunt.sonar.plugins.ignorecode.model.ViolationPattern;
 
-public final class PatternDecoder {
-
-	private static final String CONFIG_FILE = "sonar.switchoffviolations.configFile";
+public final class ViolationPatternDecoder {
 
 	private static final String LINE_RANGE_REGEXP = "\\[((\\d+|\\d+-\\d+),?)*\\]";
 
-	static List<IgnorePattern> decodeFile(final File file) {
+	static List<ViolationPattern> decodeFile(final File file) {
 		try {
-			final List<IgnorePattern> patterns = new ArrayList<IgnorePattern>();
+			final List<ViolationPattern> patterns = new ArrayList<ViolationPattern>();
 			for (final String line : Files.readAllLines(file.toPath(), Charset.defaultCharset())) {
-				final IgnorePattern pattern = decodeLine(line);
+				final ViolationPattern pattern = decodeLine(line);
 				if (pattern != null) {
 					patterns.add(pattern);
 				}
@@ -39,7 +36,7 @@ public final class PatternDecoder {
 	}
 
 	@CheckForNull
-	static IgnorePattern decodeLine(final String line) {
+	static ViolationPattern decodeLine(final String line) {
 		if (isBlankOrComment(line)) {
 			return null;
 		}
@@ -65,7 +62,7 @@ public final class PatternDecoder {
 			throw new SonarException("Invalid format. The third field does not define a range of lines: " + line);
 		}
 
-		return IgnorePattern.createIgnorePattern(resourcePattern, rulePattern, lines, line);
+		return ViolationPattern.createIgnorePattern(resourcePattern, rulePattern, lines, line);
 	}
 
 	static boolean isBlankOrComment(final String line) {
@@ -84,11 +81,10 @@ public final class PatternDecoder {
 		return StringUtils.isNotBlank(field);
 	}
 
-	public static List<IgnorePattern> loadIgnorePatterns(final Configuration configuration) {
-		final String fileLocation = configuration.getString(CONFIG_FILE);
+	public static List<ViolationPattern> loadIgnorePatterns(final String fileLocation) {
 		if (StringUtils.isNotBlank(fileLocation)) {
 			final File file = locateFile(fileLocation);
-			return PatternDecoder.decodeFile(file);
+			return ViolationPatternDecoder.decodeFile(file);
 		}
 		return Collections.emptyList();
 	}
@@ -96,13 +92,13 @@ public final class PatternDecoder {
 	static File locateFile(final String location) {
 		final File file = new File(location);
 		if (!file.exists() || !file.isFile()) {
-			throw new SonarException("File not found. Please check the parameter " + CONFIG_FILE + ": " + location);
+			throw new SonarException("File not found: " + location);
 		}
 
 		return file;
 	}
 
-	private PatternDecoder() {
+	private ViolationPatternDecoder() {
 		// hide constructor
 	}
 }

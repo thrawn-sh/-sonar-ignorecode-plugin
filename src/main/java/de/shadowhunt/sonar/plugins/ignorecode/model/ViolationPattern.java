@@ -1,13 +1,13 @@
 package de.shadowhunt.sonar.plugins.ignorecode.model;
 
-import java.util.Collections;
-import java.util.LinkedHashSet;
 import java.util.Set;
+import java.util.SortedSet;
+import java.util.TreeSet;
 
 import org.apache.commons.lang.StringUtils;
 import org.sonar.api.utils.WildcardPattern;
 
-public final class IgnorePattern {
+public final class ViolationPattern {
 
 	static void addLines(final Set<Integer> lines, final int from, final int to) {
 		if (to < from) {
@@ -18,10 +18,10 @@ public final class IgnorePattern {
 		}
 	}
 
-	public static IgnorePattern createIgnorePattern(final String resourcePattern, final String rulePattern, final String lines, final String raw) {
-		Set<Integer> lineSet = null;
+	public static ViolationPattern createIgnorePattern(final String resourcePattern, final String rulePattern, final String lines, final String raw) {
+		SortedSet<Integer> lineSet = null;
 		if (!StringUtils.equals(lines, "*")) {
-			lineSet = new LinkedHashSet<Integer>();
+			lineSet = new TreeSet<Integer>();
 			final String s = StringUtils.substringBetween(StringUtils.trim(lines), "[", "]");
 			final String[] parts = StringUtils.split(s, ',');
 			for (final String part : parts) {
@@ -34,10 +34,10 @@ public final class IgnorePattern {
 			}
 		}
 
-		return new IgnorePattern(resourcePattern, rulePattern, lineSet, raw);
+		return new ViolationPattern(resourcePattern, rulePattern, lineSet, raw);
 	}
 
-	private final Set<Integer> lines;
+	private final SortedSet<Integer> lines;
 
 	private final String raw;
 
@@ -45,10 +45,10 @@ public final class IgnorePattern {
 
 	private final WildcardPattern rulePattern;
 
-	private IgnorePattern(final String resourcePattern, final String rulePattern, final Set<Integer> lines, final String raw) {
+	private ViolationPattern(final String resourcePattern, final String rulePattern, final SortedSet<Integer> lines, final String raw) {
 		this.resourcePattern = WildcardPattern.create(resourcePattern);
 		this.rulePattern = WildcardPattern.create(rulePattern);
-		this.lines = Collections.unmodifiableSet(lines);
+		this.lines = lines;
 		this.raw = raw;
 	}
 
@@ -63,7 +63,7 @@ public final class IgnorePattern {
 		if (getClass() != obj.getClass()) {
 			return false;
 		}
-		final IgnorePattern other = (IgnorePattern) obj;
+		final ViolationPattern other = (ViolationPattern) obj;
 		if (raw == null) {
 			if (other.raw != null) {
 				return false;
