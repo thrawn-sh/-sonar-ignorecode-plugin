@@ -29,71 +29,6 @@ public class IgnoreMissingCoverageDecorator extends AbstractDecorator {
 
 	private static final Logger LOGGER = LoggerFactory.getLogger(IgnoreMissingCoverageDecorator.class);
 
-	private static void filterConditionCoverage(final DecoratorContext context, final MeasurePersister persister, final Set<Integer> ignores) {
-		@SuppressWarnings("rawtypes")
-		final Resource resource = context.getResource();
-
-		final List<LineValuePair> conditionsByLines;
-		{
-			final Measure measure = context.getMeasure(CoreMetrics.CONDITIONS_BY_LINE);
-			conditionsByLines = LineValuePair.parseDataString(measure.getData());
-			LineValuePair.removeIgnores(conditionsByLines, ignores);
-			measure.setData(LineValuePair.toDataString(conditionsByLines));
-			persister.saveMeasure(resource, measure);
-		}
-
-		final int toCover = LineValuePair.sumValues(conditionsByLines);
-		{
-			final Measure measure = context.getMeasure(CoreMetrics.CONDITIONS_TO_COVER);
-			measure.setValue((double) toCover);
-			persister.saveMeasure(resource, measure);
-		}
-
-		final List<LineValuePair> covered;
-		{
-			final Measure measure = context.getMeasure(CoreMetrics.COVERED_CONDITIONS_BY_LINE);
-			covered = LineValuePair.parseDataString(measure.getData());
-			LineValuePair.removeIgnores(covered, ignores);
-			measure.setData(LineValuePair.toDataString(covered));
-			persister.saveMeasure(resource, measure);
-		}
-
-		final int uncovered = (toCover == 0) ? 0 : (toCover - LineValuePair.sumValues(covered));
-		{
-			final Measure measure = context.getMeasure(CoreMetrics.UNCOVERED_CONDITIONS);
-			measure.setValue((double) uncovered);
-			persister.saveMeasure(resource, measure);
-		}
-	}
-
-	private static void filterLineCoverage(final DecoratorContext context, final MeasurePersister persister, final Set<Integer> ignores) {
-		@SuppressWarnings("rawtypes")
-		final Resource resource = context.getResource();
-
-		final List<LineValuePair> coverageByLines;
-		{
-			final Measure measure = context.getMeasure(CoreMetrics.COVERAGE_LINE_HITS_DATA);
-			coverageByLines = LineValuePair.parseDataString(measure.getData());
-			LineValuePair.removeIgnores(coverageByLines, ignores);
-			measure.setData(LineValuePair.toDataString(coverageByLines));
-			persister.saveMeasure(resource, measure);
-		}
-
-		final int toCover = coverageByLines.size();
-		{
-			final Measure measure = context.getMeasure(CoreMetrics.CONDITIONS_TO_COVER);
-			measure.setValue((double) toCover);
-			persister.saveMeasure(resource, measure);
-		}
-
-		final int covered = (toCover == 0) ? 0 : LineValuePair.sumValues(coverageByLines);
-		{
-			final Measure measure = context.getMeasure(CoreMetrics.LINE_COVERAGE);
-			measure.setValue((double) covered);
-			persister.saveMeasure(resource, measure);
-		}
-	}
-
 	private final Configuration configuration;
 
 	private final MeasurePersister persister;
@@ -130,8 +65,8 @@ public class IgnoreMissingCoverageDecorator extends AbstractDecorator {
 			return;
 		}
 
-		filterLineCoverage(context, persister, resourceIgnores);
-		filterConditionCoverage(context, persister, resourceIgnores);
+		filterLineCoverage(resource, context, resourceIgnores);
+		filterConditionCoverage(resource, context, resourceIgnores);
 	}
 
 	@DependsUpon
@@ -145,8 +80,70 @@ public class IgnoreMissingCoverageDecorator extends AbstractDecorator {
 				CoreMetrics.UNCOVERED_CONDITIONS);
 	}
 
+	void filterConditionCoverage(@SuppressWarnings("rawtypes") final Resource resource, final DecoratorContext context, final Set<Integer> resourceIgnores) {
+		final List<LineValuePair> conditionsByLines;
+		{
+			final Measure measure = context.getMeasure(CoreMetrics.CONDITIONS_BY_LINE);
+			conditionsByLines = LineValuePair.parseDataString(measure.getData());
+			LineValuePair.removeIgnores(conditionsByLines, resourceIgnores);
+			measure.setData(LineValuePair.toDataString(conditionsByLines));
+			persister.saveMeasure(resource, measure);
+		}
+
+		final int toCover = LineValuePair.sumValues(conditionsByLines);
+		{
+			final Measure measure = context.getMeasure(CoreMetrics.CONDITIONS_TO_COVER);
+			measure.setValue((double) toCover);
+			persister.saveMeasure(resource, measure);
+		}
+
+		final List<LineValuePair> covered;
+		{
+			final Measure measure = context.getMeasure(CoreMetrics.COVERED_CONDITIONS_BY_LINE);
+			covered = LineValuePair.parseDataString(measure.getData());
+			LineValuePair.removeIgnores(covered, resourceIgnores);
+			measure.setData(LineValuePair.toDataString(covered));
+			persister.saveMeasure(resource, measure);
+		}
+
+		final int uncovered = (toCover == 0) ? 0 : (toCover - LineValuePair.sumValues(covered));
+		{
+			final Measure measure = context.getMeasure(CoreMetrics.UNCOVERED_CONDITIONS);
+			measure.setValue((double) uncovered);
+			persister.saveMeasure(resource, measure);
+		}
+	}
+
+	void filterLineCoverage(@SuppressWarnings("rawtypes") final Resource resource, final DecoratorContext context, final Set<Integer> resourceIgnores) {
+		final List<LineValuePair> coverageByLines;
+		{
+			final Measure measure = context.getMeasure(CoreMetrics.COVERAGE_LINE_HITS_DATA);
+			coverageByLines = LineValuePair.parseDataString(measure.getData());
+			LineValuePair.removeIgnores(coverageByLines, resourceIgnores);
+			measure.setData(LineValuePair.toDataString(coverageByLines));
+			persister.saveMeasure(resource, measure);
+		}
+
+		final int toCover = coverageByLines.size();
+		{
+			final Measure measure = context.getMeasure(CoreMetrics.CONDITIONS_TO_COVER);
+			measure.setValue((double) toCover);
+			persister.saveMeasure(resource, measure);
+		}
+
+		final int covered = (toCover == 0) ? 0 : LineValuePair.sumValues(coverageByLines);
+		{
+			final Measure measure = context.getMeasure(CoreMetrics.LINE_COVERAGE);
+			measure.setValue((double) covered);
+			persister.saveMeasure(resource, measure);
+		}
+	}
+
 	@Override
 	protected String getConfigurationLocation() {
+		if (configuration == null) {
+			return null;
+		}
 		return configuration.getString(CONFIG_FILE);
 	}
 }

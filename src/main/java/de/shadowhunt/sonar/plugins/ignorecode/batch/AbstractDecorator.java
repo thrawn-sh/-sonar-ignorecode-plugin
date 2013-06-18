@@ -5,6 +5,8 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
+import javax.annotation.CheckForNull;
+
 import org.apache.commons.lang.StringUtils;
 import org.sonar.api.batch.Decorator;
 import org.sonar.api.resources.Java;
@@ -23,12 +25,17 @@ abstract class AbstractDecorator implements Decorator {
 
 	protected final void loadIgnores() {
 		final String fileLocation = getConfigurationLocation();
+		if (StringUtils.isBlank(fileLocation)) {
+			return;
+		}
+
 		final Collection<LinePattern> patterns = LinePatternDecoder.loadLinePatterns(fileLocation);
 		for (final LinePattern pattern : patterns) {
 			ignores.put(pattern.getResource(), pattern.getLines());
 		}
 	}
 
+	@CheckForNull
 	protected abstract String getConfigurationLocation();
 
 	@Override

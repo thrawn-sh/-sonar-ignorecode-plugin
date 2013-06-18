@@ -8,9 +8,19 @@ import java.util.TreeSet;
 
 import org.apache.commons.lang.StringUtils;
 
+/**
+ * {@link LinePattern} describes which lines of a resource shall be matched
+ */
 public final class LinePattern {
 
-	public static LinePattern createLinePattern(final String resource, final String lines) {
+	/**
+	 * Create a new {@link LinePattern} for the given resource by parsing the line {@link String}
+	 * @param resource full qualified class name of the java class
+	 * @param lines pattern that describes gives the lines the pattern shall match, lines can be
+	 * given as values ([1,3]) or as ranges ([5-10]) or a combination of both ([1,3,5-10])
+	 * @return the new {@link LinePattern} for the given resource by parsing the line {@link String}
+	 */
+	public static LinePattern parseLinePattern(final String resource, final String lines) {
 		final LinePattern pattern = new LinePattern(resource);
 		final String s = StringUtils.substringBetween(StringUtils.trim(lines), "[", "]");
 		final String[] parts = StringUtils.split(s, ',');
@@ -27,6 +37,11 @@ public final class LinePattern {
 		return pattern;
 	}
 
+	/**
+	 * Merges multiple {@link LinePattern} of the same resource into a single {@link LinePattern}
+	 * @param patterns {@link Collection} of {@link LinePattern} that shall be merged
+	 * @return {@link Collection} which only contains a single {@link LinePattern} for each resurce 
+	 */
 	public static Collection<LinePattern> merge(final Collection<LinePattern> patterns) {
 		final Map<String, LinePattern> cache = new HashMap<String, LinePattern>();
 		for (final LinePattern pattern : patterns) {
@@ -45,17 +60,28 @@ public final class LinePattern {
 
 	private final String resource;
 
-	public LinePattern(final String resource) {
+	private LinePattern(final String resource) {
 		this.resource = resource;
 	}
 
+	/**
+	 * Add another line this {@link LinePattern} shall match
+	 * @param line the {@link LinePattern} shall match
+	 */
 	public void addLine(final int line) {
 		lines.add(line);
 	}
 
+	/**
+	 * Add a range of lines this {@link LinePattern} shall match, all lines between
+	 * from (including) and to (including) will be added
+	 * @param from the first line in the range the {@link LinePattern} shall match, must be greater or equal than to
+	 * @param to the last line in the range the {@link LinePattern} shall match, must be smaller or equal than from
+	 * @throws IllegalArgumentException if from is not greater or equal than to
+	 */
 	public void addLines(final int from, final int to) {
-		if (to < from) {
-			throw new IllegalArgumentException("from: " + from + " must be greater than to: " + to);
+		if (to <= from) {
+			throw new IllegalArgumentException("from: " + from + " must be greater or equal than to: " + to);
 		}
 		for (int line = from; line <= to; line++) {
 			lines.add(line);
@@ -91,10 +117,18 @@ public final class LinePattern {
 		return true;
 	}
 
+	/**
+	 * Returns a {@link SortedSet} of lines this {@link LinePattern} shall match
+	 * @return the {@link SortedSet} of lines this {@link LinePattern} shall match
+	 */
 	public SortedSet<Integer> getLines() {
 		return lines;
 	}
 
+	/**
+	 * Returns a full qualified class name of the java class
+	 * @return the full qualified class name of the java class
+	 */
 	public String getResource() {
 		return resource;
 	}

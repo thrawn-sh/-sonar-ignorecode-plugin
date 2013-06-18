@@ -9,7 +9,7 @@ import org.sonar.api.utils.WildcardPattern;
 
 public final class ViolationPattern {
 
-	static void addLines(final Set<Integer> lines, final int from, final int to) {
+	static void addLines(final SortedSet<Integer> lines, final int from, final int to) {
 		if (to < from) {
 			throw new IllegalArgumentException("from: " + from + " must be greater than to: " + to);
 		}

@@ -20,30 +20,30 @@ public class LineValuePair {
 		return result;
 	}
 
-	public static List<LineValuePair> removeIgnores(final List<LineValuePair> covarageValues, final Set<Integer> ignores) {
-		for (final Iterator<LineValuePair> it = covarageValues.iterator(); it.hasNext();) {
-			final LineValuePair covarageValue = it.next();
-			if (ignores.contains(covarageValue.getLineNumber())) {
+	public static List<LineValuePair> removeIgnores(final List<LineValuePair> pairs, final Set<Integer> ignores) {
+		for (final Iterator<LineValuePair> it = pairs.iterator(); it.hasNext();) {
+			final LineValuePair pair = it.next();
+			if (ignores.contains(pair.getLineNumber())) {
 				it.remove();
 			}
 		}
-		return covarageValues;
+		return pairs;
 	}
 
-	public static int sumValues(final List<LineValuePair> covarageValues) {
+	public static int sumValues(final List<LineValuePair> pairs) {
 		int sum = 0;
-		for (final LineValuePair covarageValue : covarageValues) {
-			sum += covarageValue.getValue();
+		for (final LineValuePair pair : pairs) {
+			sum += pair.getValue();
 		}
 		return sum;
 	}
 
-	public static String toDataString(final List<LineValuePair> lineValues) {
+	public static String toDataString(final List<LineValuePair> pairs) {
 		final StringBuilder sb = new StringBuilder();
-		for (final LineValuePair lineValue : lineValues) {
-			sb.append(lineValue.lineNumber);
+		for (final LineValuePair pair : pairs) {
+			sb.append(pair.lineNumber);
 			sb.append('=');
-			sb.append(lineValue.value);
+			sb.append(pair.value);
 			sb.append(';');
 		}
 		// without last ';'
@@ -54,6 +54,11 @@ public class LineValuePair {
 
 	private int value;
 
+	/**
+	 * Create a new {@link LineValuePair} for the given line number and value
+	 * @param lineNumber the line number of the {@link LineValuePair} (can not be modified afterwards)
+	 * @param value the initial value of the {@link LineValuePair} (can be modified afterwards)
+	 */
 	public LineValuePair(final int lineNumber, final int value) {
 		this.lineNumber = lineNumber;
 		this.value = value;
@@ -80,10 +85,18 @@ public class LineValuePair {
 		return true;
 	}
 
+	/**
+	 * Returns the line number of the {@link LineValuePair}
+	 * @return the line number of the {@link LineValuePair}
+	 */
 	public int getLineNumber() {
 		return lineNumber;
 	}
 
+	/**
+	 * Returns the value of the {@link LineValuePair}
+	 * @return the value of the {@link LineValuePair}
+	 */
 	public int getValue() {
 		return value;
 	}
@@ -97,6 +110,10 @@ public class LineValuePair {
 		return result;
 	}
 
+	/**
+	 * Set the value of the {@link LineValuePair}
+	 * @param value new value of the {@link LineValuePair}
+	 */
 	public void setValue(final int value) {
 		this.value = value;
 	}

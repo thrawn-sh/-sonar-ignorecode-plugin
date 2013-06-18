@@ -1,6 +1,7 @@
 package de.shadowhunt.sonar.plugins.ignorecode.model;
 
-import java.util.HashSet;
+import java.util.SortedSet;
+import java.util.TreeSet;
 
 import org.junit.Assert;
 import org.junit.Test;
@@ -9,13 +10,13 @@ public class IgnorePatternTest {
 
 	@Test(expected = IllegalArgumentException.class)
 	public void testAddLinesException() {
-		IgnorePattern.addLines(new HashSet<Integer>(), 3, 2);
+		ViolationPattern.addLines(new TreeSet<Integer>(), 3, 2);
 	}
 
 	@Test
 	public void testAddLines() {
-		final HashSet<Integer> set = new HashSet<Integer>();
-		IgnorePattern.addLines(set, 4, 8);
+		final SortedSet<Integer> set = new TreeSet<Integer>();
+		ViolationPattern.addLines(set, 4, 8);
 
 		Assert.assertEquals("", 5, set.size());
 		Assert.assertTrue("", set.contains(4));

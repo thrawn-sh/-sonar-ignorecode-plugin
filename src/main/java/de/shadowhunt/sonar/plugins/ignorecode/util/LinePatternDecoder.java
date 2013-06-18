@@ -58,7 +58,7 @@ public class LinePatternDecoder {
 			throw new SonarException("Invalid format. The second field does not define a range of lines: " + line);
 		}
 
-		return LinePattern.createLinePattern(resource, lines);
+		return LinePattern.parseLinePattern(resource, lines);
 	}
 
 	static boolean isBlankOrComment(final String line) {
