@@ -31,7 +31,7 @@ public final class LinePattern {
 				final int to = Integer.parseInt(range[1]);
 				pattern.addLines(from, to);
 			} else {
-				pattern.addLine(Integer.valueOf(part));
+				pattern.addLine(Integer.parseInt(part));
 			}
 		}
 		return pattern;

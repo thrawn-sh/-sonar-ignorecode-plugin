@@ -19,7 +19,7 @@ import org.sonar.api.utils.SonarException;
 
 import de.shadowhunt.sonar.plugins.ignorecode.model.LinePattern;
 
-public class LinePatternDecoder {
+public final class LinePatternDecoder {
 
 	private static final String LINE_RANGE_REGEXP = "\\[((\\d+|\\d+-\\d+),?)*\\]";
 
@@ -74,8 +74,12 @@ public class LinePatternDecoder {
 	}
 
 	public static Collection<LinePattern> loadLinePatterns(final String location) {
-		final File file;
-		if (StringUtils.isBlank(location) || ((file = locateFile(location)) == null)) {
+		if (StringUtils.isBlank(location)) {
+			return Collections.emptyList();
+		}
+
+		final File file = locateFile(location);
+		if (file == null) {
 			return Collections.emptyList();
 		}
 
@@ -86,8 +90,9 @@ public class LinePatternDecoder {
 	@CheckForNull
 	static File locateFile(final String location) {
 		final File file = new File(location);
-		if (!file.exists() || !file.isFile()) {
+		if (!file.isFile()) {
 			LOGGER.warn("could not find file: " + location);
+			return null;
 		}
 
 		return file;
