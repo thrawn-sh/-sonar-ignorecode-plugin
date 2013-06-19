@@ -13,6 +13,8 @@ import java.util.regex.Pattern;
 import javax.annotation.CheckForNull;
 
 import org.apache.commons.lang.StringUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.sonar.api.utils.SonarException;
 
 import de.shadowhunt.sonar.plugins.ignorecode.model.LinePattern;
@@ -20,6 +22,8 @@ import de.shadowhunt.sonar.plugins.ignorecode.model.LinePattern;
 public class LinePatternDecoder {
 
 	private static final String LINE_RANGE_REGEXP = "\\[((\\d+|\\d+-\\d+),?)*\\]";
+
+	private static final Logger LOGGER = LoggerFactory.getLogger(LinePatternDecoder.class);
 
 	static List<LinePattern> decodeFile(final File file) {
 		try {
@@ -70,18 +74,20 @@ public class LinePatternDecoder {
 	}
 
 	public static Collection<LinePattern> loadLinePatterns(final String location) {
-		if (StringUtils.isNotBlank(location)) {
-			final File file = locateFile(location);
-			final List<LinePattern> patterns = decodeFile(file);
-			return LinePattern.merge(patterns);
+		final File file;
+		if (StringUtils.isBlank(location) || ((file = locateFile(location)) == null)) {
+			return Collections.emptyList();
 		}
-		return Collections.emptyList();
+
+		final List<LinePattern> patterns = decodeFile(file);
+		return LinePattern.merge(patterns);
 	}
 
+	@CheckForNull
 	static File locateFile(final String location) {
 		final File file = new File(location);
 		if (!file.exists() || !file.isFile()) {
-			throw new SonarException("File not found: " + location);
+			LOGGER.warn("could not find file: " + location);
 		}
 
 		return file;
