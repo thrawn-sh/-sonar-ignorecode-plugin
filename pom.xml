@@ -3,7 +3,7 @@
 	<modelVersion>4.0.0</modelVersion>
 
 	<groupId>de.shadowhunt.sonar.plugins</groupId>
-	<artifactId>ignore-code-sonar-plugin</artifactId>
+	<artifactId>sonar-ignorecode-plugin</artifactId>
 	<packaging>sonar-plugin</packaging>
 	<version>1.0.0-SNAPSHOT</version>
 
@@ -37,9 +37,9 @@
 	<!-- scm config {{{1 -->
 	<scm>
 		<tag>HEAD</tag>
-		<connection>scm:git:ssh://gitolite@git.shadowhunt.de/ignore-code-sonar-plugin.git</connection>
-		<developerConnection>scm:git:ssh://gitolite@git.shadowhunt.de/ignore-code-sonar-plugin.git</developerConnection>
-		<url>https://git.shadowhunt.de/ignore-code-sonar-plugin.git</url>
+		<connection>scm:git:ssh://gitolite@git.shadowhunt.de/sonar-ignorecode-plugin.git</connection>
+		<developerConnection>scm:git:ssh://gitolite@git.shadowhunt.de/sonar-ignorecode-plugin.git</developerConnection>
+		<url>https://git.shadowhunt.de/sonar-ignorecode-plugin.git</url>
 	</scm>
 	<!-- }}}1 -->
 
