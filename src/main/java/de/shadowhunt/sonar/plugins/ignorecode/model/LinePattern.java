@@ -40,7 +40,7 @@ public final class LinePattern {
 	/**
 	 * Merges multiple {@link LinePattern} of the same resource into a single {@link LinePattern}
 	 * @param patterns {@link Collection} of {@link LinePattern} that shall be merged
-	 * @return {@link Collection} which only contains a single {@link LinePattern} for each resurce 
+	 * @return {@link Collection} which only contains a single {@link LinePattern} for each resource 
 	 */
 	public static Collection<LinePattern> merge(final Collection<LinePattern> patterns) {
 		final Map<String, LinePattern> cache = new HashMap<String, LinePattern>();
@@ -60,7 +60,7 @@ public final class LinePattern {
 
 	private final String resource;
 
-	private LinePattern(final String resource) {
+	LinePattern(final String resource) {
 		this.resource = resource;
 	}
 
@@ -80,7 +80,7 @@ public final class LinePattern {
 	 * @throws IllegalArgumentException if from is not greater or equal than to
 	 */
 	public void addLines(final int from, final int to) {
-		if (to <= from) {
+		if (to < from) {
 			throw new IllegalArgumentException("from: " + from + " must be greater or equal than to: " + to);
 		}
 		for (int line = from; line <= to; line++) {

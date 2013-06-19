@@ -17,7 +17,7 @@ import de.shadowhunt.sonar.plugins.ignorecode.util.ViolationPatternDecoder;
 
 public class IgnoreViolationsFilter implements ViolationFilter {
 
-	public static final String CONFIG_FILE = "sonar.switchoffviolations.configFile";
+	public static final String CONFIG_FILE = "sonar.switchoffviolations.configFile"; // FIXME change to: ignoreviolations
 
 	private static final Logger LOGGER = LoggerFactory.getLogger(IgnoreViolationsFilter.class);
 
@@ -48,25 +48,24 @@ public class IgnoreViolationsFilter implements ViolationFilter {
 
 		final Integer line = violation.getLineId();
 		final Set<Integer> lines = pattern.getLines();
-		if (match && (lines != null) && (line != null)) {
+		if (match && (line != null)) {
 			match = lines.contains(line);
 		}
 		return match;
 	}
 
 	boolean matchResource(final Resource<?> resource, final WildcardPattern pattern) {
-		return (resource != null) && (resource.getKey() != null) && pattern.match(resource.getKey());
+		if (resource == null) {
+			return false;
+		}
+		final String resourceKey = resource.getKey();
+		return (resourceKey != null) && pattern.match(resourceKey);
 	}
 
 	boolean matchRule(final Rule rule, final WildcardPattern pattern) {
-		if (rule != null) {
-			final StringBuilder sb = new StringBuilder();
-			sb.append(rule.getRepositoryKey());
-			sb.append(':');
-			sb.append(rule.getKey());
-
-			return pattern.match(sb.toString());
+		if (rule == null) {
+			return false;
 		}
-		return false;
+		return pattern.match(rule.getRepositoryKey() + ":" + rule.getKey());
 	}
 }
