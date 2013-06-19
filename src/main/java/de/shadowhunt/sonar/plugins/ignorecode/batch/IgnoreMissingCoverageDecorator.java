@@ -26,9 +26,8 @@ import org.sonar.api.resources.Java;
 import org.sonar.api.resources.Project;
 import org.sonar.api.resources.Resource;
 import org.sonar.api.resources.ResourceUtils;
+import org.sonar.api.utils.SonarException;
 import org.sonar.batch.index.MeasurePersister;
-
-import com.thoughtworks.xstream.InitializationException;
 
 import de.shadowhunt.sonar.plugins.ignorecode.model.LinePattern;
 import de.shadowhunt.sonar.plugins.ignorecode.model.LineValuePair;
@@ -75,7 +74,7 @@ public class IgnoreMissingCoverageDecorator implements Decorator {
 			}
 			return ignores;
 		} catch (final IOException ioe) {
-			throw new InitializationException("could not load ignores for file: " + ignoreFile, ioe);
+			throw new SonarException("could not load ignores for file: " + ignoreFile, ioe);
 		} finally {
 			IOUtils.closeQuietly(fis);
 		}
