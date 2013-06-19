@@ -60,10 +60,10 @@ public class LinePatternTest {
 	@Test
 	public void merge() {
 		final Collection<LinePattern> input = new ArrayList<LinePattern>();
-		input.add(LinePattern.parseLinePattern("a", "[2-6]"));
-		input.add(LinePattern.parseLinePattern("a", "[5-8]"));
-		input.add(LinePattern.parseLinePattern("a", "[1,9]"));
-		input.add(LinePattern.parseLinePattern("b", "[7]"));
+		input.add(LinePattern.parseLineValues("a", "[2-6]"));
+		input.add(LinePattern.parseLineValues("a", "[5-8]"));
+		input.add(LinePattern.parseLineValues("a", "[1,9]"));
+		input.add(LinePattern.parseLineValues("b", "[7]"));
 		final Collection<LinePattern> merge = LinePattern.merge(input);
 		Assert.assertNotNull("Collection must not be null", merge);
 		Assert.assertEquals("Collection must not contain any entries", 2, merge.size());
@@ -71,9 +71,9 @@ public class LinePatternTest {
 		for (final LinePattern lp : merge) {
 			final String resource = lp.getResource();
 			if ("a".equals(resource)) {
-				Assert.assertEquals("", LinePattern.parseLinePattern("a", "[1-9]"), lp);
+				Assert.assertEquals("", LinePattern.parseLineValues("a", "[1-9]"), lp);
 			} else {
-				Assert.assertEquals("", LinePattern.parseLinePattern("b", "[7]"), lp);
+				Assert.assertEquals("", LinePattern.parseLineValues("b", "[7]"), lp);
 			}
 		}
 	}
@@ -88,7 +88,7 @@ public class LinePatternTest {
 
 	@Test
 	public void parseCombined() {
-		final LinePattern linePattern = LinePattern.parseLinePattern("a", "[1,3,5-7]");
+		final LinePattern linePattern = LinePattern.parseLineValues("a", "[1,3,5-7]");
 		Assert.assertNotNull("LinePattern must not be null", linePattern);
 
 		final SortedSet<Integer> lines = linePattern.getLines();
@@ -103,7 +103,7 @@ public class LinePatternTest {
 
 	@Test
 	public void parseRange() {
-		final LinePattern linePattern = LinePattern.parseLinePattern("a", "[2-6]");
+		final LinePattern linePattern = LinePattern.parseLineValues("a", "[2-6]");
 		Assert.assertNotNull("LinePattern must not be null", linePattern);
 
 		final SortedSet<Integer> lines = linePattern.getLines();
@@ -118,13 +118,13 @@ public class LinePatternTest {
 
 	@Test(expected = IllegalArgumentException.class)
 	public void parseRangeException() {
-		LinePattern.parseLinePattern("a", "[6-2]");
+		LinePattern.parseLineValues("a", "[6-2]");
 		Assert.fail("must not allow to switch from and to");
 	}
 
 	@Test
 	public void parseSingle() {
-		final LinePattern linePattern = LinePattern.parseLinePattern("a", "[2]");
+		final LinePattern linePattern = LinePattern.parseLineValues("a", "[2]");
 		Assert.assertNotNull("LinePattern must not be null", linePattern);
 
 		final SortedSet<Integer> lines = linePattern.getLines();

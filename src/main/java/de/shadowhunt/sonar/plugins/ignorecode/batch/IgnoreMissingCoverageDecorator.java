@@ -1,21 +1,36 @@
 package de.shadowhunt.sonar.plugins.ignorecode.batch;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
 import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import org.apache.commons.configuration.Configuration;
+import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.sonar.api.batch.Decorator;
 import org.sonar.api.batch.DecoratorContext;
 import org.sonar.api.batch.DependsUpon;
 import org.sonar.api.measures.CoreMetrics;
 import org.sonar.api.measures.Measure;
 import org.sonar.api.measures.Metric;
+import org.sonar.api.resources.Java;
+import org.sonar.api.resources.Project;
 import org.sonar.api.resources.Resource;
 import org.sonar.api.resources.ResourceUtils;
 import org.sonar.batch.index.MeasurePersister;
 
+import com.thoughtworks.xstream.InitializationException;
+
+import de.shadowhunt.sonar.plugins.ignorecode.model.LinePattern;
 import de.shadowhunt.sonar.plugins.ignorecode.model.LineValuePair;
 
 /**
@@ -23,13 +38,50 @@ import de.shadowhunt.sonar.plugins.ignorecode.model.LineValuePair;
  * Therefore the {@link IgnoreMissingCoverageDecorator} goes through all coverage metrics and removes
  * all entries for identified sources
  */
-public class IgnoreMissingCoverageDecorator extends AbstractDecorator {
+public class IgnoreMissingCoverageDecorator implements Decorator {
 
+	/**
+	 * property name that points to the ignore file: will be read from the project configuration
+	 */
 	public static final String CONFIG_FILE = "sonar.ignorecoverage.configFile";
 
 	private static final Logger LOGGER = LoggerFactory.getLogger(IgnoreMissingCoverageDecorator.class);
 
-	private final Configuration configuration;
+	final static Map<String, Set<Integer>> loadIgnores(final Configuration configuration) {
+		if (configuration == null) {
+			return Collections.emptyMap();
+		}
+
+		final String fileLocation = configuration.getString(CONFIG_FILE);
+		if (StringUtils.isBlank(fileLocation)) {
+			LOGGER.info("no ignore file configured for property: " + CONFIG_FILE);
+			return Collections.emptyMap();
+		}
+
+		final File ignoreFile = new File(fileLocation);
+		if (!ignoreFile.isFile()) {
+			LOGGER.error("could not find ignore file: " + ignoreFile);
+			return Collections.emptyMap();
+		}
+
+		FileInputStream fis = null;
+		try {
+			fis = new FileInputStream(ignoreFile);
+			final Map<String, Set<Integer>> ignores = new HashMap<String, Set<Integer>>();
+
+			final Collection<LinePattern> patterns = LinePattern.parse(fis);
+			for (final LinePattern pattern : patterns) {
+				ignores.put(pattern.getResource(), pattern.getLines());
+			}
+			return ignores;
+		} catch (final IOException ioe) {
+			throw new InitializationException("could not load ignores for file: " + ignoreFile, ioe);
+		} finally {
+			IOUtils.closeQuietly(fis);
+		}
+	}
+
+	protected final Map<String, Set<Integer>> ignores;
 
 	private final MeasurePersister persister;
 
@@ -41,9 +93,8 @@ public class IgnoreMissingCoverageDecorator extends AbstractDecorator {
 	public IgnoreMissingCoverageDecorator(final MeasurePersister persister, final Configuration configuration) {
 		super();
 		this.persister = persister;
-		this.configuration = configuration;
 
-		loadIgnores();
+		ignores = loadIgnores(configuration);
 	}
 
 	@Override
@@ -140,10 +191,12 @@ public class IgnoreMissingCoverageDecorator extends AbstractDecorator {
 	}
 
 	@Override
-	protected String getConfigurationLocation() {
-		if (configuration == null) {
-			return null;
-		}
-		return configuration.getString(CONFIG_FILE);
+	public boolean shouldExecuteOnProject(final Project project) {
+		return Java.INSTANCE.equals(project.getLanguage());
+	}
+
+	@Override
+	public final String toString() {
+		return getClass().getSimpleName();
 	}
 }

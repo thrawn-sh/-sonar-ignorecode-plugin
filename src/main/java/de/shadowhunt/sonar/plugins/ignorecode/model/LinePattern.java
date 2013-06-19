@@ -1,41 +1,22 @@
 package de.shadowhunt.sonar.plugins.ignorecode.model;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.SortedSet;
 import java.util.TreeSet;
 
+import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringUtils;
 
 /**
  * {@link LinePattern} describes which lines of a resource shall be matched
  */
 public final class LinePattern {
-
-	/**
-	 * Create a new {@link LinePattern} for the given resource by parsing the line {@link String}
-	 * @param resource full qualified class name of the java class
-	 * @param lines pattern that describes gives the lines the pattern shall match, lines can be
-	 * given as values ([1,3]) or as ranges ([5-10]) or a combination of both ([1,3,5-10])
-	 * @return the new {@link LinePattern} for the given resource by parsing the line {@link String}
-	 */
-	public static LinePattern parseLinePattern(final String resource, final String lines) {
-		final LinePattern pattern = new LinePattern(resource);
-		final String s = StringUtils.substringBetween(StringUtils.trim(lines), "[", "]");
-		final String[] parts = StringUtils.split(s, ',');
-		for (final String part : parts) {
-			if (StringUtils.contains(part, '-')) {
-				final String[] range = StringUtils.split(part, '-');
-				final int from = Integer.parseInt(range[0]);
-				final int to = Integer.parseInt(range[1]);
-				pattern.addLines(from, to);
-			} else {
-				pattern.addLine(Integer.parseInt(part));
-			}
-		}
-		return pattern;
-	}
 
 	/**
 	 * Merges multiple {@link LinePattern} of the same resource into a single {@link LinePattern}
@@ -54,6 +35,79 @@ public final class LinePattern {
 			master.lines.addAll(pattern.lines);
 		}
 		return cache.values();
+	}
+
+	/**
+	 * Create a list of {@link LinePattern} from the given {@link InputStream}
+	 * @param input containing one {@link LinePattern} per line (for a description of the
+	 * line format see {@link #parseLine(String)}. Empty lines or comments (lines starting
+	 * with '#') are ignored
+	 * @return the list of {@link LinePattern} from the given {@link InputStream}
+	 * @throws IOException in case the {@link InputStream} can not be read
+	 */
+	public static List<LinePattern> parse(final InputStream input) throws IOException {
+		final List<LinePattern> patterns = new ArrayList<LinePattern>();
+		for (final String line : IOUtils.readLines(input)) {
+			if (StringUtils.isBlank(line) || (line.charAt(0) == '#')) {
+				continue;
+			}
+
+			final LinePattern pattern = parseLine(line);
+			if (pattern != null) {
+				patterns.add(pattern);
+			}
+		}
+		return patterns;
+	}
+
+	/**
+	 * Create a new {@link LinePattern} from the given line describing the resource and
+	 * the lines in the resource
+	 * @param line each line must consist out of the full qualified resource name and lineValues,
+	 * separated by a ';' (for a description of lineValues see {@link #parseLineValues(String, String)}
+	 * @return the new {@link LinePattern} from the given line
+	 */
+	public static LinePattern parseLine(final String line) {
+		final String[] fields = StringUtils.split(line, ';');
+		if (fields.length != 2) {
+			throw new IllegalArgumentException("The line does not define 2 fields separated by ';': " + line);
+		}
+
+		final String resource = fields[0];
+		if (StringUtils.isBlank(resource)) {
+			throw new IllegalArgumentException("The first field does not define a resource pattern: " + line);
+		}
+
+		final String lineValues = fields[1];
+		if (StringUtils.isBlank(lineValues)) {
+			throw new IllegalArgumentException("The second field does not define a range of lines: " + line);
+		}
+
+		return parseLineValues(resource, lineValues);
+	}
+
+	/**
+	 * Create a new {@link LinePattern} for the given resource by parsing the lineValues
+	 * @param resource full qualified class name of the java class
+	 * @param lineValues pattern that describes the lines the {@link LinePattern} shall match, lines can be
+	 * given as values ([1,3]) or as ranges ([5-10]) or a combination of both ([1,3,5-10])
+	 * @return the new {@link LinePattern} for the given resource by parsing the lineValues
+	 */
+	public static LinePattern parseLineValues(final String resource, final String lineValues) {
+		final LinePattern pattern = new LinePattern(resource);
+		final String s = StringUtils.substringBetween(StringUtils.trim(lineValues), "[", "]");
+		final String[] parts = StringUtils.split(s, ',');
+		for (final String part : parts) {
+			if (StringUtils.contains(part, '-')) {
+				final String[] range = StringUtils.split(part, '-');
+				final int from = Integer.parseInt(range[0]);
+				final int to = Integer.parseInt(range[1]);
+				pattern.addLines(from, to);
+			} else {
+				pattern.addLine(Integer.parseInt(part));
+			}
+		}
+		return pattern;
 	}
 
 	private final SortedSet<Integer> lines = new TreeSet<Integer>();
