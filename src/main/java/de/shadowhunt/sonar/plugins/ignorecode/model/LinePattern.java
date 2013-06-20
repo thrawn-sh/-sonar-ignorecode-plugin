@@ -53,9 +53,7 @@ public final class LinePattern {
 			}
 
 			final LinePattern pattern = parseLine(line);
-			if (pattern != null) {
-				patterns.add(pattern);
-			}
+			patterns.add(pattern);
 		}
 		return patterns;
 	}

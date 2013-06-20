@@ -6,7 +6,7 @@ import java.util.TreeSet;
 import org.junit.Assert;
 import org.junit.Test;
 
-public class IgnorePatternTest {
+public class ViolationPatternTest {
 
 	@Test(expected = IllegalArgumentException.class)
 	public void testAddLinesException() {

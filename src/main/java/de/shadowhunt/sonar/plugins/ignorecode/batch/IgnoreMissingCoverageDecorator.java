@@ -46,7 +46,7 @@ public class IgnoreMissingCoverageDecorator implements Decorator {
 
 	private static final Logger LOGGER = LoggerFactory.getLogger(IgnoreMissingCoverageDecorator.class);
 
-	final static Map<String, Set<Integer>> loadIgnores(final Configuration configuration) {
+	static final Map<String, Set<Integer>> loadIgnores(final Configuration configuration) {
 		if (configuration == null) {
 			return Collections.emptyMap();
 		}
@@ -80,7 +80,7 @@ public class IgnoreMissingCoverageDecorator implements Decorator {
 		}
 	}
 
-	protected final Map<String, Set<Integer>> ignores;
+	private final Map<String, Set<Integer>> ignores;
 
 	private final MeasurePersister persister;
 

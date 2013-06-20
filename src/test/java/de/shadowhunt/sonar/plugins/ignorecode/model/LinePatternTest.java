@@ -1,12 +1,19 @@
 package de.shadowhunt.sonar.plugins.ignorecode.model;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.List;
 import java.util.SortedSet;
 
 import junit.framework.Assert;
 
+import org.apache.commons.io.IOUtils;
 import org.junit.Test;
 
 public class LinePatternTest {
@@ -87,6 +94,27 @@ public class LinePatternTest {
 	}
 
 	@Test
+	public void parse() throws IOException {
+
+		final ByteArrayOutputStream baos = new ByteArrayOutputStream();
+		final PrintWriter writer = new PrintWriter(baos);
+		writer.println("# comment");
+		writer.println();
+		writer.println("a;[2,4-6]");
+		writer.close();
+
+		final InputStream is = new ByteArrayInputStream(baos.toByteArray());
+		try {
+			final List<LinePattern> lines = LinePattern.parse(is);
+			Assert.assertNotNull("List must not be null", lines);
+			Assert.assertEquals("List must contain the exact number of entries", 0, lines.size());
+		} finally {
+			IOUtils.closeQuietly(is);
+			IOUtils.closeQuietly(baos);
+		}
+	}
+
+	@Test
 	public void parseCombined() {
 		final LinePattern linePattern = LinePattern.parseLineValues("a", "[1,3,5-7]");
 		Assert.assertNotNull("LinePattern must not be null", linePattern);
@@ -99,6 +127,76 @@ public class LinePatternTest {
 		Assert.assertTrue("SortedSet must contain line 5", lines.contains(5));
 		Assert.assertTrue("SortedSet must contain line 6", lines.contains(6));
 		Assert.assertTrue("SortedSet must contain line 7", lines.contains(7));
+	}
+
+	@Test
+	public void parseEmpty() throws IOException {
+		final InputStream is = new ByteArrayInputStream(new byte[0]);
+		try {
+			final List<LinePattern> lines = LinePattern.parse(is);
+			Assert.assertNotNull("List must not be null", lines);
+			Assert.assertEquals("List must contain the exact number of entries", 0, lines.size());
+		} finally {
+			IOUtils.closeQuietly(is);
+		}
+	}
+
+	@Test(expected = IllegalArgumentException.class)
+	public void parseLineMissingBroken() {
+		LinePattern.parseLine(";[2-3]");
+		Assert.fail("must not parse invalid input");
+	}
+
+	@Test(expected = IllegalArgumentException.class)
+	public void parseLineMissingLines() {
+		LinePattern.parseLine("a; ");
+		Assert.fail("must not parse invalid input");
+	}
+
+	@Test(expected = IllegalArgumentException.class)
+	public void parseLineMissingResource() {
+		LinePattern.parseLine(" ;[2-3]");
+		Assert.fail("must not parse invalid input");
+	}
+
+	@Test
+	public void parseLineMixed() {
+		final LinePattern lp = LinePattern.parseLine("a;[2,4-6]");
+		Assert.assertEquals("resource name must match", "a", lp.getResource());
+
+		final SortedSet<Integer> full = lp.getLines();
+		Assert.assertNotNull("SortedSet must not be null", full);
+		Assert.assertEquals("SortedSet must contain the exact number of entries", 4, full.size());
+		Assert.assertTrue("SortedSet must contain line 2", full.contains(2));
+		Assert.assertTrue("SortedSet must contain line 4", full.contains(4));
+		Assert.assertTrue("SortedSet must contain line 5", full.contains(5));
+		Assert.assertTrue("SortedSet must contain line 6", full.contains(6));
+	}
+
+	@Test
+	public void parseLineRange() {
+		final LinePattern lp = LinePattern.parseLine("a;[2-6]");
+		Assert.assertEquals("resource name must match", "a", lp.getResource());
+
+		final SortedSet<Integer> full = lp.getLines();
+		Assert.assertNotNull("SortedSet must not be null", full);
+		Assert.assertEquals("SortedSet must contain the exact number of entries", 5, full.size());
+		Assert.assertTrue("SortedSet must contain line 2", full.contains(2));
+		Assert.assertTrue("SortedSet must contain line 3", full.contains(3));
+		Assert.assertTrue("SortedSet must contain line 4", full.contains(4));
+		Assert.assertTrue("SortedSet must contain line 5", full.contains(5));
+		Assert.assertTrue("SortedSet must contain line 6", full.contains(6));
+	}
+
+	@Test
+	public void parseLineSingle() {
+		final LinePattern lp = LinePattern.parseLine("a;[2]");
+		Assert.assertEquals("resource name must match", "a", lp.getResource());
+
+		final SortedSet<Integer> full = lp.getLines();
+		Assert.assertNotNull("SortedSet must not be null", full);
+		Assert.assertEquals("SortedSet must contain the exact number of entries", 1, full.size());
+		Assert.assertTrue("SortedSet must contain line 2", full.contains(2));
 	}
 
 	@Test

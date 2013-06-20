@@ -1,6 +1,5 @@
 package de.shadowhunt.sonar.plugins.ignorecode.model;
 
-import java.util.Set;
 import java.util.SortedSet;
 import java.util.TreeSet;
 
@@ -74,7 +73,7 @@ public final class ViolationPattern {
 		return true;
 	}
 
-	public Set<Integer> getLines() {
+	public SortedSet<Integer> getLines() {
 		return lines;
 	}
 
