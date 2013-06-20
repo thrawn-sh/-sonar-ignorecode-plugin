@@ -119,6 +119,10 @@ public class IgnoreMissingCoverageDecorator implements Decorator {
 		filterConditionCoverage(resource, context, resourceIgnores);
 	}
 
+	/**
+	 * Returns a {@link List} of {@link Metric} this decorator wants to work with
+	 * @return the {@link List} of {@link Metric} this decorator wants to work with
+	 */
 	@DependsUpon
 	public List<Metric> dependsUponMetrics() {
 		return Arrays.asList(CoreMetrics.CONDITIONS_BY_LINE, //

@@ -20,7 +20,7 @@ public class LinePatternTest {
 
 		final SortedSet<Integer> full = lp.getLines();
 		Assert.assertNotNull("SortedSet must not be null", full);
-		Assert.assertEquals("SortedSet must not contain any entries", 3, full.size());
+		Assert.assertEquals("SortedSet must contain the exact number of entries", 3, full.size());
 		Assert.assertTrue("SortedSet must contain line 1", full.contains(1));
 		Assert.assertTrue("SortedSet must contain line 3", full.contains(3));
 		Assert.assertTrue("SortedSet must contain line 5", full.contains(5));
@@ -34,7 +34,7 @@ public class LinePatternTest {
 
 		final SortedSet<Integer> full = lp.getLines();
 		Assert.assertNotNull("SortedSet must not be null", full);
-		Assert.assertEquals("SortedSet must not contain any entries", 4, full.size());
+		Assert.assertEquals("SortedSet must contain the exact number of entries", 4, full.size());
 		Assert.assertTrue("SortedSet must contain line 2", full.contains(2));
 		Assert.assertTrue("SortedSet must contain line 4", full.contains(4));
 		Assert.assertTrue("SortedSet must contain line 5", full.contains(5));
@@ -66,7 +66,7 @@ public class LinePatternTest {
 		input.add(LinePattern.parseLineValues("b", "[7]"));
 		final Collection<LinePattern> merge = LinePattern.merge(input);
 		Assert.assertNotNull("Collection must not be null", merge);
-		Assert.assertEquals("Collection must not contain any entries", 2, merge.size());
+		Assert.assertEquals("Collection must contain the exact number of entries", 2, merge.size());
 
 		for (final LinePattern lp : merge) {
 			final String resource = lp.getResource();
@@ -93,7 +93,7 @@ public class LinePatternTest {
 
 		final SortedSet<Integer> lines = linePattern.getLines();
 		Assert.assertNotNull("SortedSet must not be null", lines);
-		Assert.assertEquals("SortedSet must not contain any entries", 5, lines.size());
+		Assert.assertEquals("SortedSet must contain the exact number of entries", 5, lines.size());
 		Assert.assertTrue("SortedSet must contain line 1", lines.contains(1));
 		Assert.assertTrue("SortedSet must contain line 3", lines.contains(3));
 		Assert.assertTrue("SortedSet must contain line 5", lines.contains(5));
@@ -108,7 +108,7 @@ public class LinePatternTest {
 
 		final SortedSet<Integer> lines = linePattern.getLines();
 		Assert.assertNotNull("SortedSet must not be null", lines);
-		Assert.assertEquals("SortedSet must not contain any entries", 5, lines.size());
+		Assert.assertEquals("SortedSet must contain the exact number of entries", 5, lines.size());
 		Assert.assertTrue("SortedSet must contain line 2", lines.contains(2));
 		Assert.assertTrue("SortedSet must contain line 3", lines.contains(3));
 		Assert.assertTrue("SortedSet must contain line 4", lines.contains(4));
@@ -129,7 +129,7 @@ public class LinePatternTest {
 
 		final SortedSet<Integer> lines = linePattern.getLines();
 		Assert.assertNotNull("SortedSet must not be null", lines);
-		Assert.assertEquals("SortedSet must not contain any entries", 1, lines.size());
+		Assert.assertEquals("SortedSet must contain the exact number of entries", 1, lines.size());
 		Assert.assertTrue("SortedSet must contain line 2", lines.contains(2));
 	}
 }
