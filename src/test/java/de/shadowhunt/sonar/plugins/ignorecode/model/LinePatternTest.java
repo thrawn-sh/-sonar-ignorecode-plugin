@@ -107,7 +107,18 @@ public class LinePatternTest {
 		try {
 			final List<LinePattern> lines = LinePattern.parse(is);
 			Assert.assertNotNull("List must not be null", lines);
-			Assert.assertEquals("List must contain the exact number of entries", 0, lines.size());
+			Assert.assertEquals("List must contain the exact number of entries", 1, lines.size());
+
+			final LinePattern lp = lines.get(0);
+			Assert.assertEquals("resource name must match", "a", lp.getResource());
+
+			final SortedSet<Integer> full = lp.getLines();
+			Assert.assertNotNull("SortedSet must not be null", full);
+			Assert.assertEquals("SortedSet must contain the exact number of entries", 4, full.size());
+			Assert.assertTrue("SortedSet must contain line 2", full.contains(2));
+			Assert.assertTrue("SortedSet must contain line 4", full.contains(4));
+			Assert.assertTrue("SortedSet must contain line 5", full.contains(5));
+			Assert.assertTrue("SortedSet must contain line 6", full.contains(6));
 		} finally {
 			IOUtils.closeQuietly(is);
 			IOUtils.closeQuietly(baos);
@@ -118,6 +129,7 @@ public class LinePatternTest {
 	public void parseCombined() {
 		final LinePattern linePattern = LinePattern.parseLineValues("a", "[1,3,5-7]");
 		Assert.assertNotNull("LinePattern must not be null", linePattern);
+		Assert.assertEquals("resource name must match", "a", linePattern.getResource());
 
 		final SortedSet<Integer> lines = linePattern.getLines();
 		Assert.assertNotNull("SortedSet must not be null", lines);
