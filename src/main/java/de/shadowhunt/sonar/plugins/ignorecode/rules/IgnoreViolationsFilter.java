@@ -20,9 +20,17 @@ import org.sonar.api.utils.WildcardPattern;
 
 import de.shadowhunt.sonar.plugins.ignorecode.model.ViolationPattern;
 
+/**
+ * Generated code as identified by the violations.ignore, must not conform to quality profiles.
+ * Therefore the {@link IgnoreViolationsFilter} goes through all violations and removes
+ * all entries for identified sources
+ */
 public class IgnoreViolationsFilter implements ViolationFilter {
 
-	public static final String CONFIG_FILE = "sonar.switchoffviolations.configFile"; // FIXME change to: ignoreviolations
+	/**
+	 * property name that points to the ignore file: will be read from the project configuration
+	 */
+	public static final String CONFIG_FILE = "sonar.ignoreviolations.configFile";
 
 	private static final Logger LOGGER = LoggerFactory.getLogger(IgnoreViolationsFilter.class);
 
