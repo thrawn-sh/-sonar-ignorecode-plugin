@@ -52,13 +52,13 @@ public class IgnoreMissingCoverageDecorator implements Decorator {
 
 		final String fileLocation = configuration.getString(CONFIG_FILE);
 		if (StringUtils.isBlank(fileLocation)) {
-			LOGGER.info("no ignore file configured for property: " + CONFIG_FILE);
+			LOGGER.info("no ignore file configured for property: {}", CONFIG_FILE);
 			return Collections.emptyMap();
 		}
 
 		final File ignoreFile = new File(fileLocation);
 		if (!ignoreFile.isFile()) {
-			LOGGER.error("could not find ignore file: " + ignoreFile);
+			LOGGER.error("could not find ignore file: {}", ignoreFile);
 			return Collections.emptyMap();
 		}
 

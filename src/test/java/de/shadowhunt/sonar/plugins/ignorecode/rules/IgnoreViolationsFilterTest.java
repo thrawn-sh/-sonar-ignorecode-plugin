@@ -149,7 +149,7 @@ public class IgnoreViolationsFilterTest {
 	public void loadPatternsFile() throws IOException {
 		final File tempFile = File.createTempFile("violations-", ".tmp");
 		final PrintWriter writer = new PrintWriter(tempFile);
-		writer.write("*;*;*");
+		writer.println("*;*;*");
 		writer.close();
 
 		final Configuration configuration = Mockito.mock(Configuration.class);
@@ -163,12 +163,38 @@ public class IgnoreViolationsFilterTest {
 	public void loadPatternsInvalidFile() throws IOException {
 		final File tempFile = File.createTempFile("violations-", ".tmp");
 		final PrintWriter writer = new PrintWriter(tempFile);
-		writer.write("invalid");
+		writer.println("invalid");
 		writer.close();
 
 		final Configuration configuration = Mockito.mock(Configuration.class);
 		Mockito.when(configuration.getString(IgnoreViolationsFilter.CONFIG_FILE)).thenReturn(tempFile.getAbsolutePath());
 		IgnoreViolationsFilter.loadPatterns(configuration);
 		Assert.fail("must not load invalid file");
+	}
+
+	@Test
+	public void isIgnoredNoIgnores() {
+		final IgnoreViolationsFilter filter = new IgnoreViolationsFilter(null);
+
+		final Violation violation = Violation.create(Rule.create("pmd", "AbstractClassWithoutAbstractMethod"), new JavaFile("net.example.foo.Bar"));
+		violation.setLineId(5);
+		Assert.assertFalse("no ignores => all false", filter.isIgnored(violation));
+	}
+
+	@Test
+	public void isIgnored() throws IOException {
+		final File tempFile = File.createTempFile("violations-", ".tmp");
+		final PrintWriter writer = new PrintWriter(tempFile);
+		writer.println("*;pmd:AbstractClassWithoutAnyMethod;*");
+		writer.println("*;*;*");
+		writer.close();
+
+		final Configuration configuration = Mockito.mock(Configuration.class);
+		Mockito.when(configuration.getString(IgnoreViolationsFilter.CONFIG_FILE)).thenReturn(tempFile.getAbsolutePath());
+		final IgnoreViolationsFilter filter = new IgnoreViolationsFilter(configuration);
+
+		final Violation violation = Violation.create(Rule.create("pmd", "AbstractClassWithoutAbstractMethod"), new JavaFile("net.example.foo.Bar"));
+		violation.setLineId(5);
+		Assert.assertTrue("mating ignore", filter.isIgnored(violation));
 	}
 }

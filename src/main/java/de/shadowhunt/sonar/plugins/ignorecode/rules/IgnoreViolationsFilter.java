@@ -41,13 +41,13 @@ public class IgnoreViolationsFilter implements ViolationFilter {
 
 		final String fileLocation = configuration.getString(CONFIG_FILE);
 		if (StringUtils.isBlank(fileLocation)) {
-			LOGGER.info("no ignore file configured for property: " + CONFIG_FILE);
+			LOGGER.info("no ignore file configured for property: {}", CONFIG_FILE);
 			return Collections.emptyList();
 		}
 
 		final File ignoreFile = new File(fileLocation);
 		if (!ignoreFile.isFile()) {
-			LOGGER.error("could not find ignore file: " + ignoreFile);
+			LOGGER.error("could not find ignore file: {}", ignoreFile);
 			return Collections.emptyList();
 		}
 
@@ -100,12 +100,9 @@ public class IgnoreViolationsFilter implements ViolationFilter {
 
 	@Override
 	public boolean isIgnored(final Violation violation) {
-		final boolean debugEnabled = LOGGER.isDebugEnabled();
 		for (final ViolationPattern pattern : patterns) {
 			if (match(violation, pattern)) {
-				if (debugEnabled) {
-					LOGGER.debug("Violation " + violation + " switched off by " + pattern);
-				}
+				LOGGER.debug("Violation {} switched off by {}", violation, pattern);
 				return true;
 			}
 		}

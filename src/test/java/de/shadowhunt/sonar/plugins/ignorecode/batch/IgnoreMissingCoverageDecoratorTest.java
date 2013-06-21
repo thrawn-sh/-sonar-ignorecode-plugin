@@ -44,7 +44,7 @@ public class IgnoreMissingCoverageDecoratorTest {
 	public void loadPatternsFile() throws IOException {
 		final File tempFile = File.createTempFile("coverage-", ".tmp");
 		final PrintWriter writer = new PrintWriter(tempFile);
-		writer.write("resource;[2-5]");
+		writer.println("resource;[2-5]");
 		writer.close();
 
 		final Configuration configuration = Mockito.mock(Configuration.class);
@@ -58,7 +58,7 @@ public class IgnoreMissingCoverageDecoratorTest {
 	public void loadPatternsInvalidFile() throws IOException {
 		final File tempFile = File.createTempFile("violations-", ".tmp");
 		final PrintWriter writer = new PrintWriter(tempFile);
-		writer.write("invalid");
+		writer.println("invalid");
 		writer.close();
 
 		final Configuration configuration = Mockito.mock(Configuration.class);
