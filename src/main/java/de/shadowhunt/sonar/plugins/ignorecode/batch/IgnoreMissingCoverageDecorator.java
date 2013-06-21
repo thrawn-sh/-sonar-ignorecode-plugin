@@ -179,7 +179,7 @@ public class IgnoreMissingCoverageDecorator implements Decorator {
 
 		final int toCover = coverageByLines.size();
 		{
-			final Measure measure = context.getMeasure(CoreMetrics.CONDITIONS_TO_COVER);
+			final Measure measure = context.getMeasure(CoreMetrics.LINES_TO_COVER);
 			measure.setValue((double) toCover);
 			persister.saveMeasure(resource, measure);
 		}
