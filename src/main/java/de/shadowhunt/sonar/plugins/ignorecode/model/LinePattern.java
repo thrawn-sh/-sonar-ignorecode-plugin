@@ -7,8 +7,6 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.SortedSet;
-import java.util.TreeSet;
 
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringUtils;
@@ -16,7 +14,7 @@ import org.apache.commons.lang.StringUtils;
 /**
  * {@link LinePattern} describes which lines of a resource shall be matched
  */
-public final class LinePattern {
+public final class LinePattern extends AbstractPattern {
 
 	/**
 	 * Merges multiple {@link LinePattern} of the same resource into a single {@link LinePattern}
@@ -92,23 +90,8 @@ public final class LinePattern {
 	 * @return the new {@link LinePattern} for the given resource by parsing the lineValues
 	 */
 	public static LinePattern parseLineValues(final String resource, final String lineValues) {
-		final LinePattern pattern = new LinePattern(resource);
-		final String s = StringUtils.substringBetween(StringUtils.trim(lineValues), "[", "]");
-		final String[] parts = StringUtils.split(s, ',');
-		for (final String part : parts) {
-			if (StringUtils.contains(part, '-')) {
-				final String[] range = StringUtils.split(part, '-');
-				final int from = Integer.parseInt(range[0]);
-				final int to = Integer.parseInt(range[1]);
-				pattern.addLines(from, to);
-			} else {
-				pattern.addLine(Integer.parseInt(part));
-			}
-		}
-		return pattern;
+		return parseLineValues(new LinePattern(resource), lineValues);
 	}
-
-	private final SortedSet<Integer> lines = new TreeSet<Integer>();
 
 	private final String resource;
 
@@ -116,49 +99,18 @@ public final class LinePattern {
 		this.resource = resource;
 	}
 
-	/**
-	 * Add another line this {@link LinePattern} shall match
-	 * @param line the {@link LinePattern} shall match
-	 */
-	public void addLine(final int line) {
-		lines.add(line);
-	}
-
-	/**
-	 * Add a range of lines this {@link LinePattern} shall match, all lines between
-	 * from (including) and to (including) will be added
-	 * @param from the first line in the range the {@link LinePattern} shall match, must be greater or equal than to
-	 * @param to the last line in the range the {@link LinePattern} shall match, must be smaller or equal than from
-	 * @throws IllegalArgumentException if from is not greater or equal than to
-	 */
-	public void addLines(final int from, final int to) {
-		if (to < from) {
-			throw new IllegalArgumentException("from: " + from + " must be greater or equal than to: " + to);
-		}
-		for (int line = from; line <= to; line++) {
-			lines.add(line);
-		}
-	}
-
 	@Override
 	public boolean equals(final Object obj) {
 		if (this == obj) {
 			return true;
 		}
-		if (obj == null) {
+		if (!super.equals(obj)) {
 			return false;
 		}
 		if (getClass() != obj.getClass()) {
 			return false;
 		}
 		final LinePattern other = (LinePattern) obj;
-		if (lines == null) {
-			if (other.lines != null) {
-				return false;
-			}
-		} else if (!lines.equals(other.lines)) {
-			return false;
-		}
 		if (resource == null) {
 			if (other.resource != null) {
 				return false;
@@ -167,14 +119,6 @@ public final class LinePattern {
 			return false;
 		}
 		return true;
-	}
-
-	/**
-	 * Returns a {@link SortedSet} of lines this {@link LinePattern} shall match
-	 * @return the {@link SortedSet} of lines this {@link LinePattern} shall match
-	 */
-	public SortedSet<Integer> getLines() {
-		return lines;
 	}
 
 	/**
@@ -188,8 +132,7 @@ public final class LinePattern {
 	@Override
 	public int hashCode() {
 		final int prime = 31;
-		int result = 1;
-		result = (prime * result) + ((lines == null) ? 0 : lines.hashCode());
+		int result = super.hashCode();
 		result = (prime * result) + ((resource == null) ? 0 : resource.hashCode());
 		return result;
 	}
@@ -199,8 +142,8 @@ public final class LinePattern {
 		final StringBuilder builder = new StringBuilder();
 		builder.append("LinePattern [resource=");
 		builder.append(resource);
-		builder.append(", lines=");
-		builder.append(lines);
+		builder.append(", getLines()=");
+		builder.append(getLines());
 		builder.append("]");
 		return builder.toString();
 	}

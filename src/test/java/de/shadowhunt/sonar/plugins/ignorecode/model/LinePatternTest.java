@@ -212,7 +212,7 @@ public class LinePatternTest {
 	}
 
 	@Test
-	public void parseRange() {
+	public void parseLineValuesRange() {
 		final LinePattern linePattern = LinePattern.parseLineValues("a", "[2-6]");
 		Assert.assertNotNull("LinePattern must not be null", linePattern);
 
@@ -227,13 +227,13 @@ public class LinePatternTest {
 	}
 
 	@Test(expected = IllegalArgumentException.class)
-	public void parseRangeException() {
+	public void parseLineValuesRangeException() {
 		LinePattern.parseLineValues("a", "[6-2]");
 		Assert.fail("must not allow to switch from and to");
 	}
 
 	@Test
-	public void parseSingle() {
+	public void parseLineValuesSingle() {
 		final LinePattern linePattern = LinePattern.parseLineValues("a", "[2]");
 		Assert.assertNotNull("LinePattern must not be null", linePattern);
 

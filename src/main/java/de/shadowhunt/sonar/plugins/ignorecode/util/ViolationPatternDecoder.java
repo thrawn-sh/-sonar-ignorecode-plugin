@@ -62,7 +62,7 @@ public final class ViolationPatternDecoder {
 			throw new SonarException("Invalid format. The third field does not define a range of lines: " + line);
 		}
 
-		return ViolationPattern.createIgnorePattern(resourcePattern, rulePattern, lines, line);
+		return ViolationPattern.parseLineValues(resourcePattern, rulePattern, lines);
 	}
 
 	static boolean isBlankOrComment(final String line) {

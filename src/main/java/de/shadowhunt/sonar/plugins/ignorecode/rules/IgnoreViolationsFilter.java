@@ -54,18 +54,16 @@ public class IgnoreViolationsFilter implements ViolationFilter {
 		return match;
 	}
 
-	boolean matchResource(final Resource<?> resource, final WildcardPattern pattern) {
-		if (resource == null) {
+	static boolean matchResource(final Resource<?> resource, final String pattern) {
+		final String resourceKey = resource.getKey();
+		if (resourceKey == null) {
 			return false;
 		}
-		final String resourceKey = resource.getKey();
-		return (resourceKey != null) && pattern.match(resourceKey);
+
+		return WildcardPattern.create(pattern).match(resourceKey);
 	}
 
-	boolean matchRule(final Rule rule, final WildcardPattern pattern) {
-		if (rule == null) {
-			return false;
-		}
-		return pattern.match(rule.getRepositoryKey() + ":" + rule.getKey());
+	static boolean matchRule(final Rule rule, final String pattern) {
+		return WildcardPattern.create(pattern).match(rule.getRepositoryKey() + ":" + rule.getKey());
 	}
 }

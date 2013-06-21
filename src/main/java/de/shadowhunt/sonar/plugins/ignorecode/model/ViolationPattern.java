@@ -1,54 +1,91 @@
 package de.shadowhunt.sonar.plugins.ignorecode.model;
 
-import java.util.SortedSet;
-import java.util.TreeSet;
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.ArrayList;
+import java.util.List;
 
+import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringUtils;
-import org.sonar.api.utils.WildcardPattern;
 
-public final class ViolationPattern {
+public final class ViolationPattern extends AbstractPattern {
 
-	static void addLines(final SortedSet<Integer> lines, final int from, final int to) {
-		if (to < from) {
-			throw new IllegalArgumentException("from: " + from + " must be greater than to: " + to);
-		}
-		for (int line = from; line <= to; line++) {
-			lines.add(line);
-		}
-	}
-
-	public static ViolationPattern createIgnorePattern(final String resourcePattern, final String rulePattern, final String lines, final String raw) {
-		SortedSet<Integer> lineSet = null;
-		if (!StringUtils.equals(lines, "*")) {
-			lineSet = new TreeSet<Integer>();
-			final String s = StringUtils.substringBetween(StringUtils.trim(lines), "[", "]");
-			final String[] parts = StringUtils.split(s, ',');
-			for (final String part : parts) {
-				if (StringUtils.contains(part, '-')) {
-					final String[] range = StringUtils.split(part, '-');
-					addLines(lineSet, Integer.parseInt(range[0]), Integer.parseInt(range[1]));
-				} else {
-					lineSet.add(Integer.valueOf(part));
-				}
+	/**
+	 * Create a list of {@link ViolationPattern} from the given {@link InputStream}
+	 * @param input containing one {@link ViolationPattern} per line (for a description of the
+	 * line format see {@link #parseLine(String)}. Empty lines or comments (lines starting
+	 * with '#') are ignored
+	 * @return the list of {@link ViolationPattern} from the given {@link InputStream}
+	 * @throws IOException in case the {@link InputStream} can not be read
+	 */
+	public static List<ViolationPattern> parse(final InputStream input) throws IOException {
+		final List<ViolationPattern> patterns = new ArrayList<ViolationPattern>();
+		for (final String line : IOUtils.readLines(input)) {
+			if (StringUtils.isBlank(line) || (line.charAt(0) == '#')) {
+				continue;
 			}
-		}
 
-		return new ViolationPattern(resourcePattern, rulePattern, lineSet, raw);
+			final ViolationPattern pattern = parseLine(line);
+			patterns.add(pattern);
+		}
+		return patterns;
 	}
 
-	private final SortedSet<Integer> lines;
+	/**
+	 * Create a new {@link ViolationPattern} from the given line describing the resourcePattern, the rulePattern and
+	 * the lines in the resource
+	 * @param line each line must consist out of the resourcePattern, rulePattern and lineValues,
+	 * separated by a ';' (for a description of lineValues see {@link #parseLineValues(String, String, String)}
+	 * @return the new {@link ViolationPattern} from the given line
+	 */
+	public static ViolationPattern parseLine(final String line) {
+		final String[] fields = StringUtils.split(line, ';');
+		if (fields.length != 3) {
+			throw new IllegalArgumentException("The line does not define 3 fields separated by ';': " + line);
+		}
 
-	private final String raw;
+		final String resourcePattern = fields[0];
+		if (StringUtils.isBlank(resourcePattern)) {
+			throw new IllegalArgumentException("The first field does not define a resource pattern: " + line);
+		}
 
-	private final WildcardPattern resourcePattern;
+		final String rulePattern = fields[1];
+		if (StringUtils.isBlank(rulePattern)) {
+			throw new IllegalArgumentException("The second field does not define a range of lines: " + line);
+		}
 
-	private final WildcardPattern rulePattern;
+		final String lineValues = fields[2];
+		if (StringUtils.isBlank(lineValues)) {
+			throw new IllegalArgumentException("The third field does not define a range of lines: " + line);
+		}
 
-	private ViolationPattern(final String resourcePattern, final String rulePattern, final SortedSet<Integer> lines, final String raw) {
-		this.resourcePattern = WildcardPattern.create(resourcePattern);
-		this.rulePattern = WildcardPattern.create(rulePattern);
-		this.lines = lines;
-		this.raw = raw;
+		return parseLineValues(resourcePattern, rulePattern, lineValues);
+	}
+
+	/**
+	 * Create a new {@link ViolationPattern} for the given resourcePattern and rulePattern by parsing the lineValues
+	 * @param resourcePattern pattern describing the resources that will be matched
+	 * @param rulePattern pattern describing the rules that will be matched
+	 * @param lineValues pattern that describes the lines the {@link ViolationPattern} shall match, lines can be
+	 * given as values ([1,3]) or as ranges ([5-10]) or a combination of both ([1,3,5-10])
+	 * @return the new {@link ViolationPattern} for the given resource by parsing the lineValues
+	 */
+	public static ViolationPattern parseLineValues(final String resourcePattern, final String rulePattern, final String lineValues) {
+		final ViolationPattern pattern = new ViolationPattern(resourcePattern, rulePattern);
+		if ("*".equals(lineValues)) {
+			return pattern;
+		}
+
+		return parseLineValues(pattern, lineValues);
+	}
+
+	private final String resourcePattern;
+
+	private final String rulePattern;
+
+	public ViolationPattern(final String resourcePattern, final String rulePattern) {
+		this.resourcePattern = resourcePattern;
+		this.rulePattern = rulePattern;
 	}
 
 	@Override
@@ -56,45 +93,57 @@ public final class ViolationPattern {
 		if (this == obj) {
 			return true;
 		}
-		if (obj == null) {
+		if (!super.equals(obj)) {
 			return false;
 		}
 		if (getClass() != obj.getClass()) {
 			return false;
 		}
 		final ViolationPattern other = (ViolationPattern) obj;
-		if (raw == null) {
-			if (other.raw != null) {
+		if (resourcePattern == null) {
+			if (other.resourcePattern != null) {
 				return false;
 			}
-		} else if (!raw.equals(other.raw)) {
+		} else if (!resourcePattern.equals(other.resourcePattern)) {
+			return false;
+		}
+		if (rulePattern == null) {
+			if (other.rulePattern != null) {
+				return false;
+			}
+		} else if (!rulePattern.equals(other.rulePattern)) {
 			return false;
 		}
 		return true;
 	}
 
-	public SortedSet<Integer> getLines() {
-		return lines;
-	}
-
-	public WildcardPattern getResourcePattern() {
+	public String getResourcePattern() {
 		return resourcePattern;
 	}
 
-	public WildcardPattern getRulePattern() {
+	public String getRulePattern() {
 		return rulePattern;
 	}
 
 	@Override
 	public int hashCode() {
 		final int prime = 31;
-		int result = 1;
-		result = (prime * result) + ((raw == null) ? 0 : raw.hashCode());
+		int result = super.hashCode();
+		result = (prime * result) + ((resourcePattern == null) ? 0 : resourcePattern.hashCode());
+		result = (prime * result) + ((rulePattern == null) ? 0 : rulePattern.hashCode());
 		return result;
 	}
 
 	@Override
 	public String toString() {
-		return raw;
+		final StringBuilder builder = new StringBuilder();
+		builder.append("ViolationPattern [resourcePattern=");
+		builder.append(resourcePattern);
+		builder.append(", rulePattern=");
+		builder.append(rulePattern);
+		builder.append(", getLines()=");
+		builder.append(getLines());
+		builder.append("]");
+		return builder.toString();
 	}
 }
