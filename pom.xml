@@ -406,9 +406,21 @@
 			<scope>provided</scope>
 		</dependency>
 		<dependency>
+			<groupId>org.codehaus.sonar</groupId>
+			<artifactId>sonar-core</artifactId>
+			<version>${sonar.version}</version>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
 			<groupId>org.mockito</groupId>
 			<artifactId>mockito-core</artifactId>
 			<version>1.9.5</version>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.mybatis</groupId>
+			<artifactId>mybatis</artifactId>
+			<version>3.1.1</version>
 			<scope>test</scope>
 		</dependency>
 		<dependency>
