@@ -75,11 +75,10 @@ public final class ViolationPattern extends AbstractPattern {
 	 */
 	public static ViolationPattern parseLineValues(final String resourcePattern, final String rulePattern, final String lineValues) {
 		final ViolationPattern pattern = new ViolationPattern(resourcePattern, rulePattern);
-		if ("*".equals(lineValues)) {
-			return pattern;
+		if (!"*".equals(lineValues)) {
+			parseLineValues(pattern, lineValues);
 		}
-
-		return parseLineValues(pattern, lineValues);
+		return pattern;
 	}
 
 	private final String resourcePattern;

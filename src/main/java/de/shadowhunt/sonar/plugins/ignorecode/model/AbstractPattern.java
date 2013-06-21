@@ -9,7 +9,7 @@ public abstract class AbstractPattern {
 
 	protected final SortedSet<Integer> lines = new TreeSet<Integer>();
 
-	protected static <T extends AbstractPattern> T parseLineValues(final T pattern, final String lineValues) {
+	protected static <T extends AbstractPattern> void parseLineValues(final T pattern, final String lineValues) {
 		final String s = StringUtils.substringBetween(StringUtils.trim(lineValues), "[", "]");
 		final String[] parts = StringUtils.split(s, ',');
 		for (final String part : parts) {
@@ -22,7 +22,6 @@ public abstract class AbstractPattern {
 				pattern.addLine(Integer.parseInt(part));
 			}
 		}
-		return pattern;
 	}
 
 	/**

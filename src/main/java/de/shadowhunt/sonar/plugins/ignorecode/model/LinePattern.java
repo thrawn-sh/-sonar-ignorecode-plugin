@@ -90,7 +90,9 @@ public final class LinePattern extends AbstractPattern {
 	 * @return the new {@link LinePattern} for the given resource by parsing the lineValues
 	 */
 	public static LinePattern parseLineValues(final String resource, final String lineValues) {
-		return parseLineValues(new LinePattern(resource), lineValues);
+		final LinePattern pattern = new LinePattern(resource);
+		parseLineValues(pattern, lineValues);
+		return pattern;
 	}
 
 	private final String resource;
