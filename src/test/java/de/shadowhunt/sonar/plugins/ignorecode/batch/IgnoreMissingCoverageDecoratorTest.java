@@ -9,6 +9,7 @@ import java.util.Set;
 import junit.framework.Assert;
 
 import org.apache.commons.configuration.Configuration;
+import org.apache.maven.project.MavenProject;
 import org.junit.Ignore;
 import org.junit.Test;
 import org.mockito.Mockito;
@@ -142,11 +143,13 @@ public class IgnoreMissingCoverageDecoratorTest {
 		final IgnoreMissingCoverageDecorator decorator = new IgnoreMissingCoverageDecorator(persister, null);
 
 		final Project java = Mockito.mock(Project.class);
+		java.setPom((MavenProject) null);
 		Mockito.when(java.getLanguage()).thenReturn(Java.INSTANCE);
 		Assert.assertTrue("execute on java projects", decorator.shouldExecuteOnProject(java));
 
 		final Project other = Mockito.mock(Project.class);
 		Mockito.when(other.getLanguage()).thenReturn(null);
+		other.setPom((MavenProject) null);
 		Assert.assertFalse("don't execute on non java projects", decorator.shouldExecuteOnProject(other));
 	}
 }
