@@ -8,6 +8,9 @@ import java.util.List;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringUtils;
 
+/**
+ * {@link ViolationPattern} describes which rules on which lines of resources shall be matched
+ */
 public final class ViolationPattern extends AbstractPattern {
 
 	/**

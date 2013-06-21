@@ -2,7 +2,6 @@ package de.shadowhunt.sonar.plugins.ignorecode.batch;
 
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
@@ -73,8 +72,8 @@ public class IgnoreMissingCoverageDecorator implements Decorator {
 				ignores.put(pattern.getResource(), pattern.getLines());
 			}
 			return ignores;
-		} catch (final IOException ioe) {
-			throw new SonarException("could not load ignores for file: " + ignoreFile, ioe);
+		} catch (final Exception e) {
+			throw new SonarException("could not load ignores for file: " + ignoreFile, e);
 		} finally {
 			IOUtils.closeQuietly(fis);
 		}
