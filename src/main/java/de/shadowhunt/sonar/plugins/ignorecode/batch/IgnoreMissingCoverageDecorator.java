@@ -104,7 +104,7 @@ public class IgnoreMissingCoverageDecorator implements Decorator {
 		final String resourceKey = resource.getKey();
 		LOGGER.debug("processing resource with key: " + resourceKey);
 		final Set<Integer> resourceIgnores = ignores.get(resourceKey);
-		if ((resourceIgnores == null) || resourceIgnores.isEmpty()) {
+		if (resourceIgnores == null) {
 			LOGGER.debug("no coverage data must be filtered");
 			return;
 		}
