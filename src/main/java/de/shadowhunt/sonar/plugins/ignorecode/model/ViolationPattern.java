@@ -85,6 +85,11 @@ public final class ViolationPattern extends AbstractPattern {
 
 	private final String rulePattern;
 
+	/**
+	 * Create a new {@link ViolationPattern} with the given resourcePattern and rulePattern
+	 * @param resourcePattern pattern that describes the resources this {@link ViolationPattern} shall match
+	 * @param rulePattern pattern that describes the rules this {@link ViolationPattern} shall match
+	 */
 	public ViolationPattern(final String resourcePattern, final String rulePattern) {
 		this.resourcePattern = resourcePattern;
 		this.rulePattern = rulePattern;
@@ -119,10 +124,18 @@ public final class ViolationPattern extends AbstractPattern {
 		return true;
 	}
 
+	/**
+	 * Returns a pattern that describes the resources that shall match
+	 * @return the pattern that describes the resources that shall match
+	 */
 	public String getResourcePattern() {
 		return resourcePattern;
 	}
 
+	/**
+	 * Returns a pattern that describes the rules that shall match
+	 * @return the pattern that describes the rules that shall match
+	 */
 	public String getRulePattern() {
 		return rulePattern;
 	}

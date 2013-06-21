@@ -5,6 +5,9 @@ import java.util.TreeSet;
 
 import org.apache.commons.lang.StringUtils;
 
+/**
+ * {@link AbstractPattern} is the base for all patterns that must handle lines
+ */
 public abstract class AbstractPattern {
 
 	protected final SortedSet<Integer> lines = new TreeSet<Integer>();
@@ -70,6 +73,10 @@ public abstract class AbstractPattern {
 		return true;
 	}
 
+	/**
+	 * Returns a {@link SortedSet} of all lines the pattern shall match
+	 * @return the {@link SortedSet} of all lines the pattern shall match
+	 */
 	public SortedSet<Integer> getLines() {
 		return new TreeSet<Integer>(lines);
 	}

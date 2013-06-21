@@ -82,6 +82,10 @@ public class IgnoreViolationsFilter implements ViolationFilter {
 
 	private final List<ViolationPattern> patterns;
 
+	/**
+	 * Create a new {@link IgnoreViolationsFilter} that loads its patterns with {@link #CONFIG_FILE} key from the given {@link Configuration}
+	 * @param configuration project {@link Configuration}
+	 */
 	public IgnoreViolationsFilter(final Configuration configuration) {
 		patterns = loadPatterns(configuration);
 	}
