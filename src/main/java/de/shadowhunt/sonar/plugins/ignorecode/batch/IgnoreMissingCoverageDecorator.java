@@ -30,7 +30,6 @@ import org.sonar.api.resources.Resource;
 import org.sonar.api.resources.ResourceUtils;
 import org.sonar.api.utils.SonarException;
 import org.sonar.batch.index.Bucket;
-import org.sonar.batch.index.DefaultIndex;
 import org.sonar.batch.index.MeasurePersister;
 
 import com.google.common.collect.ListMultimap;
@@ -257,7 +256,7 @@ public class IgnoreMissingCoverageDecorator implements Decorator {
 	private void overrideMeasure0(final DecoratorContext context, final Measure measure) throws Exception {
 		final Field indexField = context.getClass().getDeclaredField("index");
 		indexField.setAccessible(true);
-		final SonarIndex index = (DefaultIndex) indexField.get(context);
+		final SonarIndex index = (SonarIndex) indexField.get(context);
 
 		final Field bucketField = index.getClass().getDeclaredField("buckets");
 		bucketField.setAccessible(true);
