@@ -68,7 +68,7 @@ public class IgnoreMissingCoverageDecorator implements Decorator {
 			final Map<String, Set<Integer>> ignores = new HashMap<String, Set<Integer>>();
 
 			final Collection<LinePattern> patterns = LinePattern.parse(fis);
-			for (final LinePattern pattern : patterns) {
+			for (final LinePattern pattern : LinePattern.merge(patterns)) {
 				ignores.put(pattern.getResource(), pattern.getLines());
 			}
 			return ignores;
