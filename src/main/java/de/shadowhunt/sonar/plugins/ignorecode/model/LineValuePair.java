@@ -69,8 +69,8 @@ public class LineValuePair {
 	 * @param pairs {@link Collection} of {@link LineValuePair} to sum up their values 
 	 * @return sum of all values
 	 */
-	public static int sumValues(final Collection<LineValuePair> pairs) {
-		int sum = 0;
+	public static double sumValues(final Collection<LineValuePair> pairs) {
+		double sum = 0;
 		for (final LineValuePair pair : pairs) {
 			sum += pair.getValue();
 		}
