@@ -5,7 +5,7 @@
 	<groupId>de.shadowhunt.sonar.plugins</groupId>
 	<artifactId>sonar-ignorecode-plugin</artifactId>
 	<packaging>sonar-plugin</packaging>
-	<version>1.0.0</version>
+	<version>1.0.1-SNAPSHOT</version>
 
 	<name>Sonar Ignore Code Plugin</name>
 	<description>filter all code that has been marked</description>
@@ -36,7 +36,7 @@
 
 	<!-- scm config {{{1 -->
 	<scm>
-		<tag>v1.0.0</tag>
+		<tag>HEAD</tag>
 		<connection>scm:git:ssh://gitolite@git.shadowhunt.de/sonar-ignorecode-plugin.git</connection>
 		<developerConnection>scm:git:ssh://gitolite@git.shadowhunt.de/sonar-ignorecode-plugin.git</developerConnection>
 		<url>https://git.shadowhunt.de/sonar-ignorecode-plugin.git</url>
