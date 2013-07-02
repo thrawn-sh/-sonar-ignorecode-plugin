@@ -119,7 +119,7 @@ public class LineValuePairTest {
 		final Set<Integer> ignoreLines = Collections.emptySet();
 
 		LineValuePair.removeIgnores(pairs, ignoreLines);
-		Assert.assertEquals("List must contain the exact number of entries", 3, pairs.size());
+		Assert.assertEquals("List must contain the exact number of entries", 0, pairs.size());
 	}
 
 	@Test

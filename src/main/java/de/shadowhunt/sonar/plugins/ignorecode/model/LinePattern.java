@@ -91,7 +91,9 @@ public final class LinePattern extends AbstractPattern {
 	 */
 	public static LinePattern parseLineValues(final String resource, final String lineValues) {
 		final LinePattern pattern = new LinePattern(resource);
-		parseLineValues(pattern, lineValues);
+		if (!"*".equals(lineValues)) {
+			parseLineValues(pattern, lineValues);
+		}
 		return pattern;
 	}
 

@@ -51,6 +51,11 @@ public class LineValuePair {
 	 * @param ignoreLines {@link Set} of lines to remove 
 	 */
 	public static void removeIgnores(final List<LineValuePair> pairs, final Set<Integer> ignoreLines) {
+		if (ignoreLines.isEmpty()) {
+			pairs.clear();
+			return;
+		}
+
 		for (final Iterator<LineValuePair> it = pairs.iterator(); it.hasNext();) {
 			final LineValuePair pair = it.next();
 			if (ignoreLines.contains(pair.getLineNumber())) {
