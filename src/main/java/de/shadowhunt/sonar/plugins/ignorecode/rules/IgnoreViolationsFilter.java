@@ -54,7 +54,9 @@ public class IgnoreViolationsFilter implements ViolationFilter {
 		FileInputStream fis = null;
 		try {
 			fis = new FileInputStream(ignoreFile);
-			return ViolationPattern.parse(fis);
+			final List<ViolationPattern> patterns = ViolationPattern.parse(fis);
+			LOGGER.info("IgnoreViolationsFilter: loaded {} violation ignores from {}", patterns.size(), ignoreFile);
+			return patterns;
 		} catch (final Exception e) {
 			throw new SonarException("could not load ignores for file: " + ignoreFile, e);
 		} finally {
