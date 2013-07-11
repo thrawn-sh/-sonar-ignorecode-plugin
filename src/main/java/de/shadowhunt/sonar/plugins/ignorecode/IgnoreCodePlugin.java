@@ -5,7 +5,7 @@ import java.util.List;
 
 import org.sonar.api.SonarPlugin;
 
-import de.shadowhunt.sonar.plugins.ignorecode.batch.IgnoreMissingCoverageDecorator;
+import de.shadowhunt.sonar.plugins.ignorecode.batch.IgnoreCoverageDecorator;
 import de.shadowhunt.sonar.plugins.ignorecode.rules.IgnoreViolationsFilter;
 
 /**
@@ -16,6 +16,6 @@ public class IgnoreCodePlugin extends SonarPlugin {
 	@Override
 	@SuppressWarnings({ "deprecation", "rawtypes" })
 	public List getExtensions() {
-		return Arrays.asList(IgnoreViolationsFilter.class, IgnoreMissingCoverageDecorator.class);
+		return Arrays.asList(IgnoreCoverageDecorator.class, IgnoreViolationsFilter.class);
 	}
 }

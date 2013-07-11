@@ -31,7 +31,8 @@
 		<sonar.jacoco.reportPath>${project.basedir}/target/jacoco.exec</sonar.jacoco.reportPath>
 		<sonar.dynamicAnalysis>reuseReports</sonar.dynamicAnalysis>
 
-		<sonar.switchoffviolations.configFile>${project.basedir}/target/sonar.ignore</sonar.switchoffviolations.configFile>
+		<sonar.ignorecoverage.configFile>${project.basedir}/target/coverage.ignore</sonar.ignorecoverage.configFile>
+		<sonar.ignoreviolations.configFile>${project.basedir}/target/violations.ignore</sonar.ignoreviolations.configFile>
 	</properties>
 
 	<!-- scm config {{{1 -->
@@ -70,7 +71,7 @@
 				<plugin>
 					<groupId>de.shadowhunt.maven.plugins</groupId>
 					<artifactId>sonarignore-maven-plugin</artifactId>
-					<version>3.2.0</version>
+					<version>3.3.0</version>
 				</plugin>
 				<plugin>
 					<groupId>org.apache.maven.plugins</groupId>
@@ -160,7 +161,7 @@
 				<plugin>
 					<groupId>org.jacoco</groupId>
 					<artifactId>jacoco-maven-plugin</artifactId>
-					<version>0.6.2.201302030002</version>
+					<version>0.6.3.201306030806</version>
 				</plugin>
 			</plugins>
 		</pluginManagement><!-- }}}1 -->
@@ -188,13 +189,19 @@
 				<groupId>de.shadowhunt.maven.plugins</groupId>
 				<artifactId>sonarignore-maven-plugin</artifactId>
 				<configuration>
-					<ignoreAnnotations />
-					<forceCheckAnnotations />
-
-					<ignoreEquals>true</ignoreEquals>
-					<ignoreGetterAndSetter>true</ignoreGetterAndSetter>
-					<ignoreHashcode>true</ignoreHashcode>
-					<ignoreToString>true</ignoreToString>
+					<globalSettings>
+						<ignoreEquals>true</ignoreEquals>
+						<ignoreGeneratedClasses>true</ignoreGeneratedClasses>
+						<ignoreGettersAndSetters>true</ignoreGettersAndSetters>
+						<ignoreHashcode>true</ignoreHashcode>
+						<ignoreToString>true</ignoreToString>
+					</globalSettings>
+					<coverageSettings>
+						<output>${sonar.ignorecoverage.configFile}</output>
+					</coverageSettings>
+					<violationSettings>
+						<output>${sonar.ignoreviolations.configFile}</output>
+					</violationSettings>
 				</configuration>
 				<executions>
 					<execution>
@@ -384,7 +391,7 @@
 		<dependency>
 			<groupId>junit</groupId>
 			<artifactId>junit</artifactId>
-			<version>4.10</version>
+			<version>4.11</version>
 			<scope>test</scope>
 		</dependency>
 		<dependency>

@@ -56,10 +56,10 @@ public class IgnoreMissingCoverageDecoratorTest {
 		writer.close();
 
 		final Configuration configuration = Mockito.mock(Configuration.class);
-		Mockito.when(configuration.getString(IgnoreMissingCoverageDecorator.CONFIG_FILE)).thenReturn(tempFile.getPath());
+		Mockito.when(configuration.getString(IgnoreCoverageDecorator.CONFIG_FILE)).thenReturn(tempFile.getPath());
 
 		final MeasurePersister persister = createMeasurePersisterMock();
-		final IgnoreMissingCoverageDecorator decorator = new IgnoreMissingCoverageDecorator(persister, configuration);
+		final IgnoreCoverageDecorator decorator = new IgnoreCoverageDecorator(persister, configuration);
 
 		final DecoratorContext context = Mockito.mock(DecoratorContext.class);
 		Mockito.when(context.getMeasure(CoreMetrics.COVERAGE_LINE_HITS_DATA)).thenReturn(new Measure());
@@ -100,10 +100,10 @@ public class IgnoreMissingCoverageDecoratorTest {
 		writer.close();
 
 		final Configuration configuration = Mockito.mock(Configuration.class);
-		Mockito.when(configuration.getString(IgnoreMissingCoverageDecorator.CONFIG_FILE)).thenReturn(tempFile.getPath());
+		Mockito.when(configuration.getString(IgnoreCoverageDecorator.CONFIG_FILE)).thenReturn(tempFile.getPath());
 
 		final MeasurePersister persister = new MeasurePersister(null, null, null, null);
-		final IgnoreMissingCoverageDecorator decorator = new IgnoreMissingCoverageDecorator(persister, configuration);
+		final IgnoreCoverageDecorator decorator = new IgnoreCoverageDecorator(persister, configuration);
 
 		final DecoratorContext context = Mockito.mock(DecoratorContext.class);
 
@@ -114,7 +114,7 @@ public class IgnoreMissingCoverageDecoratorTest {
 	@Test
 	public void decorateNoFile() {
 		final MeasurePersister persister = new MeasurePersister(null, null, null, null);
-		final IgnoreMissingCoverageDecorator decorator = new IgnoreMissingCoverageDecorator(persister, null);
+		final IgnoreCoverageDecorator decorator = new IgnoreCoverageDecorator(persister, null);
 
 		final DecoratorContext context = Mockito.mock(DecoratorContext.class);
 		final Directory dir = new Directory("net/example/foo");
@@ -124,7 +124,7 @@ public class IgnoreMissingCoverageDecoratorTest {
 	@Test
 	public void decorateNoIgnores() {
 		final MeasurePersister persister = new MeasurePersister(null, null, null, null);
-		final IgnoreMissingCoverageDecorator decorator = new IgnoreMissingCoverageDecorator(persister, null);
+		final IgnoreCoverageDecorator decorator = new IgnoreCoverageDecorator(persister, null);
 
 		final DecoratorContext context = Mockito.mock(DecoratorContext.class);
 		final JavaFile file = new JavaFile("net.example.foo.Bar");
@@ -134,8 +134,8 @@ public class IgnoreMissingCoverageDecoratorTest {
 	@Test
 	public void loadPatternsEmptyConfigFile() {
 		final Configuration configuration = Mockito.mock(Configuration.class);
-		Mockito.when(configuration.getString(IgnoreMissingCoverageDecorator.CONFIG_FILE)).thenReturn("");
-		final Map<String, Set<Integer>> ignores = IgnoreMissingCoverageDecorator.loadIgnores(configuration);
+		Mockito.when(configuration.getString(IgnoreCoverageDecorator.CONFIG_FILE)).thenReturn("");
+		final Map<String, Set<Integer>> ignores = AbstractOverridingDecorator.loadIgnores(configuration, IgnoreCoverageDecorator.CONFIG_FILE);
 		Assert.assertNotNull("Map must not be null", ignores);
 		Assert.assertTrue("Map must be empty", ignores.isEmpty());
 	}
@@ -148,8 +148,8 @@ public class IgnoreMissingCoverageDecoratorTest {
 		writer.close();
 
 		final Configuration configuration = Mockito.mock(Configuration.class);
-		Mockito.when(configuration.getString(IgnoreMissingCoverageDecorator.CONFIG_FILE)).thenReturn(tempFile.getAbsolutePath());
-		final Map<String, Set<Integer>> ignores = IgnoreMissingCoverageDecorator.loadIgnores(configuration);
+		Mockito.when(configuration.getString(IgnoreCoverageDecorator.CONFIG_FILE)).thenReturn(tempFile.getAbsolutePath());
+		final Map<String, Set<Integer>> ignores = AbstractOverridingDecorator.loadIgnores(configuration, IgnoreCoverageDecorator.CONFIG_FILE);
 		Assert.assertNotNull("Map must not be null", ignores);
 		Assert.assertEquals("Map must contain the exact number of entries", 1, ignores.size());
 	}
@@ -162,23 +162,23 @@ public class IgnoreMissingCoverageDecoratorTest {
 		writer.close();
 
 		final Configuration configuration = Mockito.mock(Configuration.class);
-		Mockito.when(configuration.getString(IgnoreMissingCoverageDecorator.CONFIG_FILE)).thenReturn(tempFile.getAbsolutePath());
-		IgnoreMissingCoverageDecorator.loadIgnores(configuration);
+		Mockito.when(configuration.getString(IgnoreCoverageDecorator.CONFIG_FILE)).thenReturn(tempFile.getAbsolutePath());
+		AbstractOverridingDecorator.loadIgnores(configuration, IgnoreCoverageDecorator.CONFIG_FILE);
 		Assert.fail("must not load invalid file");
 	}
 
 	@Test
 	public void loadPatternsNoConfigFile() {
 		final Configuration configuration = Mockito.mock(Configuration.class);
-		Mockito.when(configuration.getString(IgnoreMissingCoverageDecorator.CONFIG_FILE)).thenReturn("no file");
-		final Map<String, Set<Integer>> ignores = IgnoreMissingCoverageDecorator.loadIgnores(configuration);
+		Mockito.when(configuration.getString(IgnoreCoverageDecorator.CONFIG_FILE)).thenReturn("no file");
+		final Map<String, Set<Integer>> ignores = AbstractOverridingDecorator.loadIgnores(configuration, IgnoreCoverageDecorator.CONFIG_FILE);
 		Assert.assertNotNull("Map must not be null", ignores);
 		Assert.assertTrue("Map must be empty", ignores.isEmpty());
 	}
 
 	@Test
 	public void loadPatternsNull() {
-		final Map<String, Set<Integer>> ignores = IgnoreMissingCoverageDecorator.loadIgnores(null);
+		final Map<String, Set<Integer>> ignores = AbstractOverridingDecorator.loadIgnores(null, IgnoreCoverageDecorator.CONFIG_FILE);
 		Assert.assertNotNull("Map must not be null", ignores);
 		Assert.assertTrue("Map must be empty", ignores.isEmpty());
 	}
@@ -186,7 +186,7 @@ public class IgnoreMissingCoverageDecoratorTest {
 	@Test
 	public void shouldExecuteOnProject() {
 		final MeasurePersister persister = new MeasurePersister(null, null, null, null);
-		final IgnoreMissingCoverageDecorator decorator = new IgnoreMissingCoverageDecorator(persister, null);
+		final IgnoreCoverageDecorator decorator = new IgnoreCoverageDecorator(persister, null);
 
 		final Project java = Mockito.mock(Project.class);
 		java.setPom((MavenProject) null);
