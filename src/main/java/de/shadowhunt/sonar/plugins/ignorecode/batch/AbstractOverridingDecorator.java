@@ -26,6 +26,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import com.google.common.collect.ListMultimap;
 import org.apache.commons.configuration.Configuration;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringUtils;
@@ -41,8 +42,6 @@ import org.sonar.api.resources.Resource;
 import org.sonar.api.utils.SonarException;
 import org.sonar.batch.index.Bucket;
 import org.sonar.batch.index.MeasurePersister;
-
-import com.google.common.collect.ListMultimap;
 
 import de.shadowhunt.sonar.plugins.ignorecode.model.LinePattern;
 
@@ -107,9 +106,9 @@ abstract class AbstractOverridingDecorator implements Decorator {
 		final Field bucketField = index.getClass().getDeclaredField("buckets");
 		bucketField.setAccessible(true);
 		@SuppressWarnings("unchecked")
-		final Map<Resource<?>, Bucket> buckets = (Map<Resource<?>, Bucket>) bucketField.get(index);
+		final Map<Resource, Bucket> buckets = (Map<Resource, Bucket>) bucketField.get(index);
 
-		final Resource<?> resource = context.getResource();
+		final Resource resource = context.getResource();
 		final Bucket bucket = buckets.get(resource);
 
 		final Field measuresByMetricField = bucket.getClass().getDeclaredField("measuresByMetric");

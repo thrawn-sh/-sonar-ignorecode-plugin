@@ -98,7 +98,7 @@ public class IgnoreViolationsFilter implements ViolationFilter {
 		return lines.contains(violation.getLineId());
 	}
 
-	static boolean matchResource(final Resource<?> resource, final String pattern) {
+	static boolean matchResource(final Resource resource, final String pattern) {
 		return WildcardPattern.create(pattern).match(resource.getKey());
 	}
 
