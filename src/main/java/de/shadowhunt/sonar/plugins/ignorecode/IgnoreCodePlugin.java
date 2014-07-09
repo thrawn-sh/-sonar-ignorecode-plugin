@@ -16,22 +16,21 @@
  */
 package de.shadowhunt.sonar.plugins.ignorecode;
 
-import java.util.Arrays;
 import java.util.List;
 
+import com.google.common.collect.ImmutableList;
 import org.sonar.api.SonarPlugin;
 
 import de.shadowhunt.sonar.plugins.ignorecode.batch.IgnoreCoverageDecorator;
-import de.shadowhunt.sonar.plugins.ignorecode.rules.IgnoreViolationsFilter;
+import de.shadowhunt.sonar.plugins.ignorecode.batch.IgnoreIssueFilter;
 
 /**
  * Register all {@code Extension}s
  */
 public class IgnoreCodePlugin extends SonarPlugin {
 
-	@Override
-	@SuppressWarnings({ "deprecation", "rawtypes" })
-	public List getExtensions() {
-		return Arrays.asList(IgnoreCoverageDecorator.class, IgnoreViolationsFilter.class);
-	}
+    @Override
+    public List getExtensions() {
+        return ImmutableList.of(IgnoreCoverageDecorator.class, IgnoreIssueFilter.class);
+    }
 }

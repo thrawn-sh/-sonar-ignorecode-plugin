@@ -21,197 +21,249 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.Map;
 import java.util.Set;
-
-import junit.framework.Assert;
+import java.util.SortedSet;
+import java.util.TreeSet;
 
 import org.apache.commons.configuration.Configuration;
 import org.apache.ibatis.session.SqlSession;
-import org.apache.maven.project.MavenProject;
+import org.junit.Assert;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.TemporaryFolder;
 import org.mockito.Matchers;
 import org.mockito.Mockito;
+import org.mockito.invocation.InvocationOnMock;
+import org.mockito.stubbing.Answer;
 import org.sonar.api.batch.DecoratorContext;
+import org.sonar.api.batch.SonarIndex;
+import org.sonar.api.batch.fs.FileSystem;
 import org.sonar.api.database.model.MeasureMapper;
 import org.sonar.api.database.model.Snapshot;
 import org.sonar.api.measures.CoreMetrics;
 import org.sonar.api.measures.Measure;
 import org.sonar.api.resources.Directory;
-import org.sonar.api.resources.Java;
-import org.sonar.api.resources.JavaFile;
 import org.sonar.api.resources.Project;
+import org.sonar.api.resources.ProjectFileSystem;
 import org.sonar.api.resources.Resource;
 import org.sonar.api.utils.SonarException;
+import org.sonar.batch.DefaultDecoratorContext;
+import org.sonar.batch.index.Bucket;
+import org.sonar.batch.index.DefaultIndex;
 import org.sonar.batch.index.MeasurePersister;
 import org.sonar.batch.index.MemoryOptimizer;
+import org.sonar.batch.index.PersistenceManager;
 import org.sonar.batch.index.ResourcePersister;
 import org.sonar.core.persistence.MyBatis;
 
 public class IgnoreMissingCoverageDecoratorTest {
 
-	private static MeasurePersister createMeasurePersisterMock() {
-		final ResourcePersister resourcePersister = Mockito.mock(ResourcePersister.class);
-		final Snapshot snapshot = Mockito.mock(Snapshot.class);
-		Mockito.when(resourcePersister.getSnapshotOrFail(Matchers.<Resource<?>> any())).thenReturn(snapshot);
+    private static DecoratorContext createDecoratorContextMock(final Resource resource, final Measure... measures) throws Exception {
+        final Bucket bucket = new Bucket(resource);
+        for (Measure measure : measures) {
+            bucket.addMeasure(measure);
+        }
+        final PersistenceManager pm = Mockito.mock(PersistenceManager.class);
+        final Answer<Measure> answer = new Answer<Measure>() {
 
-		final MyBatis mybatis = Mockito.mock(MyBatis.class);
-		final SqlSession session = Mockito.mock(SqlSession.class);
-		Mockito.when(mybatis.openSession()).thenReturn(session);
-		final MeasureMapper mapper = Mockito.mock(MeasureMapper.class);
-		Mockito.when(session.getMapper(MeasureMapper.class)).thenReturn(mapper);
+            @Override
+            public Measure answer(final InvocationOnMock invocation) throws Throwable {
+                return (Measure) invocation.getArguments()[0];
+            }
+        };
+        Mockito.when(pm.reloadMeasure(Mockito.any(Measure.class))).thenAnswer(answer);
 
-		final MemoryOptimizer optimizer = Mockito.mock(MemoryOptimizer.class);
+        final SonarIndex index = new DefaultIndex(pm, null, null, null, null, null);
+        final Map<Resource, Bucket> buckets = AbstractOverridingDecorator.getPrivateField(index, "buckets");
+        buckets.put(resource, bucket);
+        return new DefaultDecoratorContext(resource, index, null, null);
+    }
 
-		return new MeasurePersister(mybatis, resourcePersister, null, optimizer);
-	}
+    private static FileSystem createFileSystemMock(final String language) {
+        FileSystem fileSystem = Mockito.mock(FileSystem.class);
+        SortedSet<String> languages = new TreeSet<String>();
+        languages.add(language);
+        Mockito.when(fileSystem.languages()).thenReturn(languages);
+        return fileSystem;
+    }
 
-	@Test
-	public void decorate() throws IOException {
-		final File tempFile = File.createTempFile("coverage-", ".tmp");
-		final PrintWriter writer = new PrintWriter(tempFile);
-		writer.println("net.example.foo.Bar;[2-5]");
-		writer.close();
+    private static MeasurePersister createMeasurePersisterMock() {
+        final ResourcePersister resourcePersister = Mockito.mock(ResourcePersister.class);
+        final Snapshot snapshot = Mockito.mock(Snapshot.class);
+        Mockito.when(resourcePersister.getSnapshotOrFail(Matchers.<Resource>any())).thenReturn(snapshot);
 
-		final Configuration configuration = Mockito.mock(Configuration.class);
-		Mockito.when(configuration.getString(IgnoreCoverageDecorator.CONFIG_FILE)).thenReturn(tempFile.getPath());
+        final MyBatis mybatis = Mockito.mock(MyBatis.class);
+        final SqlSession session = Mockito.mock(SqlSession.class);
+        Mockito.when(mybatis.openSession()).thenReturn(session);
+        final MeasureMapper mapper = Mockito.mock(MeasureMapper.class);
+        Mockito.when(session.getMapper(MeasureMapper.class)).thenReturn(mapper);
 
-		final MeasurePersister persister = createMeasurePersisterMock();
-		final IgnoreCoverageDecorator decorator = new IgnoreCoverageDecorator(persister, configuration);
+        final MemoryOptimizer optimizer = Mockito.mock(MemoryOptimizer.class);
 
-		final DecoratorContext context = Mockito.mock(DecoratorContext.class);
-		Mockito.when(context.getMeasure(CoreMetrics.COVERAGE_LINE_HITS_DATA)).thenReturn(new Measure());
+        return new MeasurePersister(mybatis, resourcePersister, null, optimizer);
+    }
 
-		final Measure cbl = new Measure(CoreMetrics.CONDITIONS_BY_LINE, "3=1;6=2");
-		Mockito.when(context.getMeasure(CoreMetrics.CONDITIONS_BY_LINE)).thenReturn(cbl);
-		final Measure ctc = new Measure(CoreMetrics.CONDITIONS_TO_COVER, 3.0);
-		Mockito.when(context.getMeasure(CoreMetrics.CONDITIONS_TO_COVER)).thenReturn(ctc);
-		final Measure ccbl = new Measure(CoreMetrics.COVERED_CONDITIONS_BY_LINE, "6=1");
-		Mockito.when(context.getMeasure(CoreMetrics.COVERED_CONDITIONS_BY_LINE)).thenReturn(ccbl);
-		final Measure uc = new Measure(CoreMetrics.UNCOVERED_CONDITIONS, 2.0);
-		Mockito.when(context.getMeasure(CoreMetrics.UNCOVERED_CONDITIONS)).thenReturn(uc);
+    @Rule
+    public TemporaryFolder temporaryFolder = new TemporaryFolder();
 
-		final Measure clh = new Measure(CoreMetrics.COVERAGE_LINE_HITS_DATA, "1=1;2=0;3=0;4=0;5=0;6=1");
-		Mockito.when(context.getMeasure(CoreMetrics.COVERAGE_LINE_HITS_DATA)).thenReturn(clh);
-		final Measure ltc = new Measure(CoreMetrics.LINES_TO_COVER, 6.0);
-		Mockito.when(context.getMeasure(CoreMetrics.LINES_TO_COVER)).thenReturn(ltc);
-		final Measure lc = new Measure(CoreMetrics.LINE_COVERAGE, 2.0);
-		Mockito.when(context.getMeasure(CoreMetrics.LINE_COVERAGE)).thenReturn(lc);
+    @SuppressWarnings("deprecation")
+    private Project createProjectMock() {
+        final ProjectFileSystem fileSystem = Mockito.mock(ProjectFileSystem.class);
+        Mockito.when(fileSystem.getBasedir()).thenReturn(temporaryFolder.getRoot());
+        final Project project = Mockito.mock(Project.class);
+        Mockito.when(project.getFileSystem()).thenReturn(fileSystem);
+        return project;
+    }
 
-		final JavaFile file = new JavaFile("net.example.foo.Bar");
-		decorator.decorate(file, context);
-		Assert.assertEquals("CONDITIONS_BY_LINE must match", "6=2", cbl.getData());
-		Assert.assertEquals("CONDITIONS_TO_COVER must match", 2.0, ctc.getValue());
-		Assert.assertEquals("COVERED_CONDITIONS_BY_LINE must match", "6=1", ccbl.getData());
-		Assert.assertEquals("UNCOVERED_CONDITIONS must match", 1.0, uc.getValue());
+    @Test
+    public void decorate() throws Exception {
+        final File tempFile = temporaryFolder.newFile("coverage.txt");
+        final PrintWriter writer = new PrintWriter(tempFile);
+        writer.println("src/main/java/net/example/foo/Bar.java;[2-5]");
+        writer.close();
 
-		Assert.assertEquals("COVERAGE_LINE_HITS_DATA must match", "1=1;6=1", clh.getData());
-		Assert.assertEquals("LINES_TO_COVER must match", 2.0, ltc.getValue());
-		Assert.assertEquals("LINE_COVERAGE must match", 2.0, lc.getValue());
-	}
+        final Configuration configuration = Mockito.mock(Configuration.class);
+        Mockito.when(configuration.getString(IgnoreCoverageDecorator.CONFIG_FILE)).thenReturn(tempFile.getPath());
 
-	@Test
-	public void decorateNoCoverageData() throws IOException {
-		final File tempFile = File.createTempFile("coverage-", ".tmp");
-		final PrintWriter writer = new PrintWriter(tempFile);
-		writer.println("net.example.foo.Bar;[2-5]");
-		writer.close();
+        final FileSystem fileSystem = createFileSystemMock("java");
+        final MeasurePersister persister = createMeasurePersisterMock();
+        final IgnoreCoverageDecorator decorator = new IgnoreCoverageDecorator(fileSystem, persister, configuration);
 
-		final Configuration configuration = Mockito.mock(Configuration.class);
-		Mockito.when(configuration.getString(IgnoreCoverageDecorator.CONFIG_FILE)).thenReturn(tempFile.getPath());
+        final Measure cbl = new Measure(CoreMetrics.CONDITIONS_BY_LINE, "3=1;6=2");
+        final Measure ctc = new Measure(CoreMetrics.CONDITIONS_TO_COVER, 3.0);
+        final Measure ccbl = new Measure(CoreMetrics.COVERED_CONDITIONS_BY_LINE, "6=1");
+        final Measure uc = new Measure(CoreMetrics.UNCOVERED_CONDITIONS, 2.0);
+        final Measure ul = new Measure(CoreMetrics.UNCOVERED_LINES, 100.0);
+        final Measure clh = new Measure(CoreMetrics.COVERAGE_LINE_HITS_DATA, "1=1;2=0;3=0;4=0;5=0;6=1");
+        final Measure ltc = new Measure(CoreMetrics.LINES_TO_COVER, 6.0);
+        final Measure lc = new Measure(CoreMetrics.LINE_COVERAGE, 2.0);
+        final Measure bc = new Measure(CoreMetrics.BRANCH_COVERAGE, 75.0);
+        final Measure c = new Measure(CoreMetrics.COVERAGE, 80.0);
 
-		final MeasurePersister persister = new MeasurePersister(null, null, null, null);
-		final IgnoreCoverageDecorator decorator = new IgnoreCoverageDecorator(persister, configuration);
+        final Project project = createProjectMock();
+        final Resource file = org.sonar.api.resources.File.fromIOFile(new File(temporaryFolder.getRoot(), "src/main/java/net/example/foo/Bar.java"), project);
 
-		final DecoratorContext context = Mockito.mock(DecoratorContext.class);
+        final DecoratorContext context = createDecoratorContextMock(file, cbl, ctc, ccbl, uc, ul, clh, ltc, lc, bc, c);
+        decorator.decorate(file, context);
 
-		final JavaFile file = new JavaFile("net.example.foo.Bar");
-		decorator.decorate(file, context);
-	}
+        Assert.assertEquals("CONDITIONS_BY_LINE must match", "6=2", cbl.getData());
+        Assert.assertEquals("CONDITIONS_TO_COVER must match", Double.valueOf(2.0), ctc.getValue());
+        Assert.assertEquals("COVERED_CONDITIONS_BY_LINE must match", "6=1", ccbl.getData());
+        Assert.assertEquals("UNCOVERED_CONDITIONS must match", Double.valueOf(1.0), uc.getValue());
 
-	@Test
-	public void decorateNoFile() {
-		final MeasurePersister persister = new MeasurePersister(null, null, null, null);
-		final IgnoreCoverageDecorator decorator = new IgnoreCoverageDecorator(persister, null);
+        Assert.assertEquals("COVERAGE_LINE_HITS_DATA must match", "1=1;6=1", clh.getData());
+        Assert.assertEquals("LINES_TO_COVER must match", Double.valueOf(2.0), ltc.getValue());
+        //Assert.assertEquals("LINE_COVERAGE must match", Double.valueOf(2.0), lc.getValue());
+    }
 
-		final DecoratorContext context = Mockito.mock(DecoratorContext.class);
-		final Directory dir = new Directory("net/example/foo");
-		decorator.decorate(dir, context);
-	}
+    @Test
+    public void decorateNoCoverageData() throws IOException {
+        final File tempFile = temporaryFolder.newFile("coverage.txt");
+        final PrintWriter writer = new PrintWriter(tempFile);
+        writer.println("src/main/java/net/example/foo/Bar.java;[2-5]");
+        writer.close();
 
-	@Test
-	public void decorateNoIgnores() {
-		final MeasurePersister persister = new MeasurePersister(null, null, null, null);
-		final IgnoreCoverageDecorator decorator = new IgnoreCoverageDecorator(persister, null);
+        final Configuration configuration = Mockito.mock(Configuration.class);
+        Mockito.when(configuration.getString(IgnoreCoverageDecorator.CONFIG_FILE)).thenReturn(tempFile.getPath());
 
-		final DecoratorContext context = Mockito.mock(DecoratorContext.class);
-		final JavaFile file = new JavaFile("net.example.foo.Bar");
-		decorator.decorate(file, context);
-	}
+        final FileSystem fileSystem = createFileSystemMock("java");
+        final MeasurePersister persister = createMeasurePersisterMock();
+        final IgnoreCoverageDecorator decorator = new IgnoreCoverageDecorator(fileSystem, persister, configuration);
 
-	@Test
-	public void loadPatternsEmptyConfigFile() {
-		final Configuration configuration = Mockito.mock(Configuration.class);
-		Mockito.when(configuration.getString(IgnoreCoverageDecorator.CONFIG_FILE)).thenReturn("");
-		final Map<String, Set<Integer>> ignores = AbstractOverridingDecorator.loadIgnores(configuration, IgnoreCoverageDecorator.CONFIG_FILE);
-		Assert.assertNotNull("Map must not be null", ignores);
-		Assert.assertTrue("Map must be empty", ignores.isEmpty());
-	}
+        final DecoratorContext context = Mockito.mock(DecoratorContext.class);
 
-	@Test
-	public void loadPatternsFile() throws IOException {
-		final File tempFile = File.createTempFile("coverage-", ".tmp");
-		final PrintWriter writer = new PrintWriter(tempFile);
-		writer.println("resource;[2-5]");
-		writer.close();
+        final Project project = createProjectMock();
+        final org.sonar.api.resources.File file = org.sonar.api.resources.File.fromIOFile(new File(temporaryFolder.getRoot(), "src/main/java/net/example/foo/Bar"), project);
 
-		final Configuration configuration = Mockito.mock(Configuration.class);
-		Mockito.when(configuration.getString(IgnoreCoverageDecorator.CONFIG_FILE)).thenReturn(tempFile.getAbsolutePath());
-		final Map<String, Set<Integer>> ignores = AbstractOverridingDecorator.loadIgnores(configuration, IgnoreCoverageDecorator.CONFIG_FILE);
-		Assert.assertNotNull("Map must not be null", ignores);
-		Assert.assertEquals("Map must contain the exact number of entries", 1, ignores.size());
-	}
+        decorator.decorate(file, context);
+    }
 
-	@Test(expected = SonarException.class)
-	public void loadPatternsInvalidFile() throws IOException {
-		final File tempFile = File.createTempFile("violations-", ".tmp");
-		final PrintWriter writer = new PrintWriter(tempFile);
-		writer.println("invalid");
-		writer.close();
+    @Test
+    public void decorateNoFile() throws IOException {
+        final FileSystem fileSystem = createFileSystemMock("java");
+        final MeasurePersister persister = createMeasurePersisterMock();
+        final IgnoreCoverageDecorator decorator = new IgnoreCoverageDecorator(fileSystem, persister, null);
 
-		final Configuration configuration = Mockito.mock(Configuration.class);
-		Mockito.when(configuration.getString(IgnoreCoverageDecorator.CONFIG_FILE)).thenReturn(tempFile.getAbsolutePath());
-		AbstractOverridingDecorator.loadIgnores(configuration, IgnoreCoverageDecorator.CONFIG_FILE);
-		Assert.fail("must not load invalid file");
-	}
+        final DecoratorContext context = Mockito.mock(DecoratorContext.class);
+        final Project project = createProjectMock();
+        final Directory dir = Directory.fromIOFile(temporaryFolder.newFolder("net"), project);
+        decorator.decorate(dir, context);
+    }
 
-	@Test
-	public void loadPatternsNoConfigFile() {
-		final Configuration configuration = Mockito.mock(Configuration.class);
-		Mockito.when(configuration.getString(IgnoreCoverageDecorator.CONFIG_FILE)).thenReturn("no file");
-		final Map<String, Set<Integer>> ignores = AbstractOverridingDecorator.loadIgnores(configuration, IgnoreCoverageDecorator.CONFIG_FILE);
-		Assert.assertNotNull("Map must not be null", ignores);
-		Assert.assertTrue("Map must be empty", ignores.isEmpty());
-	}
+    @Test
+    public void decorateNoIgnores() {
+        final FileSystem fileSystem = createFileSystemMock("java");
+        final MeasurePersister persister = createMeasurePersisterMock();
+        final IgnoreCoverageDecorator decorator = new IgnoreCoverageDecorator(fileSystem, persister, null);
 
-	@Test
-	public void loadPatternsNull() {
-		final Map<String, Set<Integer>> ignores = AbstractOverridingDecorator.loadIgnores(null, IgnoreCoverageDecorator.CONFIG_FILE);
-		Assert.assertNotNull("Map must not be null", ignores);
-		Assert.assertTrue("Map must be empty", ignores.isEmpty());
-	}
+        final DecoratorContext context = Mockito.mock(DecoratorContext.class);
+        final Project project = createProjectMock();
+        final org.sonar.api.resources.File file = org.sonar.api.resources.File.fromIOFile(new File(temporaryFolder.getRoot(), "net/example/foo/Bar"), project);
+        decorator.decorate(file, context);
+    }
 
-	@Test
-	public void shouldExecuteOnProject() {
-		final MeasurePersister persister = new MeasurePersister(null, null, null, null);
-		final IgnoreCoverageDecorator decorator = new IgnoreCoverageDecorator(persister, null);
+    @Test
+    public void loadPatternsEmptyConfigFile() {
+        final Configuration configuration = Mockito.mock(Configuration.class);
+        Mockito.when(configuration.getString(IgnoreCoverageDecorator.CONFIG_FILE)).thenReturn("");
+        final Map<String, Set<Integer>> ignores = AbstractOverridingDecorator.loadIgnores(configuration, IgnoreCoverageDecorator.CONFIG_FILE);
+        Assert.assertNotNull("Map must not be null", ignores);
+        Assert.assertTrue("Map must be empty", ignores.isEmpty());
+    }
 
-		final Project java = Mockito.mock(Project.class);
-		java.setPom((MavenProject) null);
-		Mockito.when(java.getLanguage()).thenReturn(Java.INSTANCE);
-		Assert.assertTrue("execute on java projects", decorator.shouldExecuteOnProject(java));
+    @Test
+    public void loadPatternsFile() throws IOException {
+        final File tempFile = temporaryFolder.newFile("coverage.txt");
+        final PrintWriter writer = new PrintWriter(tempFile);
+        writer.println("resource;[2-5]");
+        writer.close();
 
-		final Project other = Mockito.mock(Project.class);
-		Mockito.when(other.getLanguage()).thenReturn(null);
-		other.setPom((MavenProject) null);
-		Assert.assertFalse("don't execute on non java projects", decorator.shouldExecuteOnProject(other));
-	}
+        final Configuration configuration = Mockito.mock(Configuration.class);
+        Mockito.when(configuration.getString(IgnoreCoverageDecorator.CONFIG_FILE)).thenReturn(tempFile.getAbsolutePath());
+        final Map<String, Set<Integer>> ignores = AbstractOverridingDecorator.loadIgnores(configuration, IgnoreCoverageDecorator.CONFIG_FILE);
+        Assert.assertNotNull("Map must not be null", ignores);
+        Assert.assertEquals("Map must contain the exact number of entries", 1, ignores.size());
+    }
+
+    @Test(expected = SonarException.class)
+    public void loadPatternsInvalidFile() throws IOException {
+        final File tempFile = temporaryFolder.newFile("violations.txt");
+        final PrintWriter writer = new PrintWriter(tempFile);
+        writer.println("invalid");
+        writer.close();
+
+        final Configuration configuration = Mockito.mock(Configuration.class);
+        Mockito.when(configuration.getString(IgnoreCoverageDecorator.CONFIG_FILE)).thenReturn(tempFile.getAbsolutePath());
+        AbstractOverridingDecorator.loadIgnores(configuration, IgnoreCoverageDecorator.CONFIG_FILE);
+        Assert.fail("must not load invalid file");
+    }
+
+    @Test
+    public void loadPatternsNoConfigFile() {
+        final Configuration configuration = Mockito.mock(Configuration.class);
+        Mockito.when(configuration.getString(IgnoreCoverageDecorator.CONFIG_FILE)).thenReturn("no file");
+        final Map<String, Set<Integer>> ignores = AbstractOverridingDecorator.loadIgnores(configuration, IgnoreCoverageDecorator.CONFIG_FILE);
+        Assert.assertNotNull("Map must not be null", ignores);
+        Assert.assertTrue("Map must be empty", ignores.isEmpty());
+    }
+
+    @Test
+    public void loadPatternsNull() {
+        final Map<String, Set<Integer>> ignores = AbstractOverridingDecorator.loadIgnores(null, IgnoreCoverageDecorator.CONFIG_FILE);
+        Assert.assertNotNull("Map must not be null", ignores);
+        Assert.assertTrue("Map must be empty", ignores.isEmpty());
+    }
+
+    @Test
+    public void shouldExecuteOnProject() {
+        final MeasurePersister persister = createMeasurePersisterMock();
+        final Project project = Mockito.mock(Project.class);
+
+        final FileSystem javaFileSystem = createFileSystemMock("java");
+        final IgnoreCoverageDecorator java = new IgnoreCoverageDecorator(javaFileSystem, persister, null);
+        Assert.assertTrue("execute on java projects", java.shouldExecuteOnProject(project));
+
+        final FileSystem otherFileSystem = createFileSystemMock("php");
+        final IgnoreCoverageDecorator other = new IgnoreCoverageDecorator(otherFileSystem, persister, null);
+        Assert.assertFalse("don't execute on non java projects", other.shouldExecuteOnProject(project));
+    }
 }

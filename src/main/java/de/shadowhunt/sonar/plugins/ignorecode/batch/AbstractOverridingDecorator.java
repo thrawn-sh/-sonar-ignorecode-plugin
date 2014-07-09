@@ -35,8 +35,9 @@ import org.slf4j.LoggerFactory;
 import org.sonar.api.batch.Decorator;
 import org.sonar.api.batch.DecoratorContext;
 import org.sonar.api.batch.SonarIndex;
+import org.sonar.api.batch.fs.FileSystem;
 import org.sonar.api.measures.Measure;
-import org.sonar.api.resources.Java;
+import org.sonar.api.measures.Metric;
 import org.sonar.api.resources.Project;
 import org.sonar.api.resources.Resource;
 import org.sonar.api.utils.SonarException;
@@ -47,94 +48,102 @@ import de.shadowhunt.sonar.plugins.ignorecode.model.LinePattern;
 
 abstract class AbstractOverridingDecorator implements Decorator {
 
-	private static final Logger LOGGER = LoggerFactory.getLogger(AbstractOverridingDecorator.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(AbstractOverridingDecorator.class);
 
-	static final Map<String, Set<Integer>> loadIgnores(final Configuration configuration, final String property) {
-		if (configuration == null) {
-			return Collections.emptyMap();
-		}
+    @SuppressWarnings("unchecked")
+    static <E> E getPrivateField(final Object object, final String fieldName) throws Exception {
+        Class<?> contextClass = object.getClass();
+        final Field field = contextClass.getDeclaredField(fieldName);
+        field.setAccessible(true);
+        return (E) field.get(object);
+    }
 
-		final String fileLocation = configuration.getString(property);
-		if (StringUtils.isBlank(fileLocation)) {
-			LOGGER.info("no ignore file configured for property: {}", property);
-			return Collections.emptyMap();
-		}
+    static Map<String, Set<Integer>> loadIgnores(final Configuration configuration, final String property) {
+        if (configuration == null) {
+            return Collections.emptyMap();
+        }
 
-		final File ignoreFile = new File(fileLocation);
-		if (!ignoreFile.isFile()) {
-			LOGGER.error("could not find ignore file: {}", ignoreFile);
-			return Collections.emptyMap();
-		}
+        final String fileLocation = configuration.getString(property);
+        if (StringUtils.isBlank(fileLocation)) {
+            LOGGER.info("no ignore file configured for property: {}", property);
+            return Collections.emptyMap();
+        }
 
-		FileInputStream fis = null;
-		try {
-			fis = new FileInputStream(ignoreFile);
-			final Map<String, Set<Integer>> ignores = new HashMap<String, Set<Integer>>();
+        final File ignoreFile = new File(fileLocation);
+        if (!ignoreFile.isFile()) {
+            LOGGER.error("could not find ignore file: {}", ignoreFile);
+            return Collections.emptyMap();
+        }
 
-			final Collection<LinePattern> patterns = LinePattern.parse(fis);
-			for (final LinePattern pattern : LinePattern.merge(patterns)) {
-				ignores.put(pattern.getResource(), pattern.getLines());
-			}
-			LOGGER.info("loaded {} ignores from {}", patterns.size(), ignoreFile);
-			return ignores;
-		} catch (final Exception e) {
-			throw new SonarException("could not load ignores for file: " + ignoreFile, e);
-		} finally {
-			IOUtils.closeQuietly(fis);
-		}
-	}
+        FileInputStream fis = null;
+        try {
+            fis = new FileInputStream(ignoreFile);
+            final Map<String, Set<Integer>> ignores = new HashMap<>();
 
-	private final MeasurePersister persister;
+            final Collection<LinePattern> patterns = LinePattern.parse(fis);
+            for (final LinePattern pattern : LinePattern.merge(patterns)) {
+                ignores.put(pattern.getResource(), pattern.getLines());
+            }
+            LOGGER.info("loaded {} ignores from {}", patterns.size(), ignoreFile);
+            return ignores;
+        } catch (final Exception e) {
+            throw new SonarException("could not load ignores for file: " + ignoreFile, e);
+        } finally {
+            IOUtils.closeQuietly(fis);
+        }
+    }
 
-	AbstractOverridingDecorator(final MeasurePersister persister) {
-		this.persister = persister;
-	}
+    private final FileSystem fileSystem;
 
-	protected void overrideMeasure(final DecoratorContext context, final Measure measure) {
-		try {
-			overrideMeasure0(context, measure);
-		} catch (final Exception e) {
-			throw new SonarException("could not override measure", e);
-		}
-	}
+    private final MeasurePersister persister;
 
-	private void overrideMeasure0(final DecoratorContext context, final Measure measure) throws Exception {
-		final Field indexField = context.getClass().getDeclaredField("index");
-		indexField.setAccessible(true);
-		final SonarIndex index = (SonarIndex) indexField.get(context);
+    AbstractOverridingDecorator(final FileSystem fileSystem, final MeasurePersister persister) {
+        this.fileSystem = fileSystem;
+        this.persister = persister;
+    }
 
-		final Field bucketField = index.getClass().getDeclaredField("buckets");
-		bucketField.setAccessible(true);
-		@SuppressWarnings("unchecked")
-		final Map<Resource, Bucket> buckets = (Map<Resource, Bucket>) bucketField.get(index);
+    List<Measure> getMeasuresForMetric(final DecoratorContext context, final Metric metric) throws Exception {
+        final SonarIndex index = getPrivateField(context, "index");
 
-		final Resource resource = context.getResource();
-		final Bucket bucket = buckets.get(resource);
+        final Map<Resource, Bucket> buckets = getPrivateField(index, "buckets");
 
-		final Field measuresByMetricField = bucket.getClass().getDeclaredField("measuresByMetric");
-		measuresByMetricField.setAccessible(true);
-		@SuppressWarnings("unchecked")
-		final ListMultimap<String, Measure> measuresByMetric = (ListMultimap<String, Measure>) measuresByMetricField.get(bucket);
-		final List<Measure> metricMeasures = measuresByMetric.get(measure.getMetric().getKey());
-		final int measureIndex = metricMeasures.indexOf(measure);
-		if (measureIndex < 0) {
-			metricMeasures.add(measure);
-		} else {
-			metricMeasures.add(measureIndex, measure);
-		}
+        final Resource resource = context.getResource();
+        final Bucket bucket = buckets.get(resource);
+        final ListMultimap<String, Measure> measuresByMetric = getPrivateField(bucket, "measuresByMetric");
+        return measuresByMetric.get(metric.getKey());
+    }
 
-		if (measure.getPersistenceMode().useDatabase()) {
-			persister.saveMeasure(resource, measure);
-		}
-	}
+    protected void overrideMeasure(final DecoratorContext context, final Measure measure) {
+        try {
+            overrideMeasure0(context, measure);
+        } catch (final Exception e) {
+            throw new SonarException("could not override measure", e);
+        }
+    }
 
-	@Override
-	public final boolean shouldExecuteOnProject(final Project project) {
-		return Java.INSTANCE.equals(project.getLanguage());
-	}
+    private void overrideMeasure0(final DecoratorContext context, final Measure measure) throws Exception {
+        final List<Measure> metricMeasures = getMeasuresForMetric(context, measure.getMetric());
+        final int measureIndex = metricMeasures.indexOf(measure);
+        if (measureIndex < 0) {
+            metricMeasures.add(measure);
+        } else {
+            // replace existing measure
+            metricMeasures.add(measureIndex, measure);
+        }
 
-	@Override
-	public final String toString() {
-		return getClass().getSimpleName();
-	}
+        if (measure.getPersistenceMode().useDatabase()) {
+            final Resource resource = context.getResource();
+            persister.saveMeasure(resource, measure);
+        }
+    }
+
+    @Override
+    public final boolean shouldExecuteOnProject(final Project project) {
+        return fileSystem.languages().contains("java");
+    }
+
+    @Override
+    public final String toString() {
+        return getClass().getSimpleName();
+    }
 }
