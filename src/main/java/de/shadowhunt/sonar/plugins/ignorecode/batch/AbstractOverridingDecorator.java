@@ -52,7 +52,7 @@ abstract class AbstractOverridingDecorator implements Decorator {
 
     @SuppressWarnings("unchecked")
     static <E> E getPrivateField(final Object object, final String fieldName) throws Exception {
-        Class<?> contextClass = object.getClass();
+        final Class<?> contextClass = object.getClass();
         final Field field = contextClass.getDeclaredField(fieldName);
         field.setAccessible(true);
         return (E) field.get(object);

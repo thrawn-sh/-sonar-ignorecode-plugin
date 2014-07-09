@@ -201,7 +201,7 @@ public class LineValuePair {
         builder.append(lineNumber);
         builder.append(", value=");
         builder.append(value);
-        builder.append("]");
+        builder.append(']');
         return builder.toString();
     }
 }

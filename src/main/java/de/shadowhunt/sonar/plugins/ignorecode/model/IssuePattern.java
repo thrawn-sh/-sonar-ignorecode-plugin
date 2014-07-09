@@ -184,7 +184,7 @@ public final class IssuePattern extends AbstractPattern {
         builder.append(rulePattern);
         builder.append(", getLines()=");
         builder.append(getLines());
-        builder.append("]");
+        builder.append(']');
         return builder.toString();
     }
 }

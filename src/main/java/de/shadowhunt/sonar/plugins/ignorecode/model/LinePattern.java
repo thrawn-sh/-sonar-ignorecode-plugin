@@ -174,7 +174,7 @@ public final class LinePattern extends AbstractPattern {
         builder.append(resource);
         builder.append(", getLines()=");
         builder.append(getLines());
-        builder.append("]");
+        builder.append(']');
         return builder.toString();
     }
 }
