@@ -40,7 +40,7 @@ public final class LinePattern extends AbstractPattern {
      * @return {@link Collection} which only contains a single {@link LinePattern} for each resource
      */
     public static Collection<LinePattern> merge(final Collection<LinePattern> patterns) {
-        final Map<String, LinePattern> cache = new HashMap<String, LinePattern>();
+        final Map<String, LinePattern> cache = new HashMap<>();
         for (final LinePattern pattern : patterns) {
             final LinePattern master = cache.get(pattern.resource);
             if (master == null) {
@@ -65,7 +65,7 @@ public final class LinePattern extends AbstractPattern {
      * @throws IOException in case the {@link InputStream} can not be read
      */
     public static List<LinePattern> parse(final InputStream input) throws IOException {
-        final List<LinePattern> patterns = new ArrayList<LinePattern>();
+        final List<LinePattern> patterns = new ArrayList<>();
         for (final String line : IOUtils.readLines(input)) {
             if (StringUtils.isBlank(line) || (line.charAt(0) == '#')) {
                 continue;

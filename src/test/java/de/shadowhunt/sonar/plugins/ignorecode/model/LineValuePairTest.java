@@ -105,11 +105,11 @@ public class LineValuePairTest {
 
     @Test
     public void removeIgnores() {
-        final List<LineValuePair> pairs = new ArrayList<LineValuePair>();
+        final List<LineValuePair> pairs = new ArrayList<>();
         pairs.add(new LineValuePair(1, 5));
         pairs.add(new LineValuePair(2, 7));
         pairs.add(new LineValuePair(3, -4));
-        final Set<Integer> ignoreLines = new HashSet<Integer>();
+        final Set<Integer> ignoreLines = new HashSet<>();
         ignoreLines.add(1);
         ignoreLines.add(3);
 
@@ -123,7 +123,7 @@ public class LineValuePairTest {
 
     @Test
     public void removeIgnoresEmptyIgnores() {
-        final List<LineValuePair> pairs = new ArrayList<LineValuePair>();
+        final List<LineValuePair> pairs = new ArrayList<>();
         pairs.add(new LineValuePair(1, 5));
         pairs.add(new LineValuePair(2, 7));
         pairs.add(new LineValuePair(3, -4));
@@ -136,7 +136,7 @@ public class LineValuePairTest {
     @Test
     public void removeIgnoresEmptyParis() {
         final List<LineValuePair> pairs = Collections.emptyList();
-        final Set<Integer> ignoreLines = new HashSet<Integer>();
+        final Set<Integer> ignoreLines = new HashSet<>();
         ignoreLines.add(2);
 
         LineValuePair.removeIgnores(pairs, ignoreLines);
@@ -145,7 +145,7 @@ public class LineValuePairTest {
 
     @Test
     public void sumValues() {
-        final List<LineValuePair> pairs = new ArrayList<LineValuePair>();
+        final List<LineValuePair> pairs = new ArrayList<>();
         pairs.add(new LineValuePair(1, 5));
         pairs.add(new LineValuePair(2, 7));
         pairs.add(new LineValuePair(3, -4));
@@ -160,14 +160,14 @@ public class LineValuePairTest {
 
     @Test
     public void sumValuesSingle() {
-        final List<LineValuePair> pairs = new ArrayList<LineValuePair>();
+        final List<LineValuePair> pairs = new ArrayList<>();
         pairs.add(new LineValuePair(1, 5));
         Assert.assertEquals("sum must match", 5.0, LineValuePair.sumValues(pairs), DELTA);
     }
 
     @Test
     public void toDataString() {
-        final List<LineValuePair> pairs = new ArrayList<LineValuePair>();
+        final List<LineValuePair> pairs = new ArrayList<>();
         pairs.add(new LineValuePair(1, 5));
         pairs.add(new LineValuePair(2, 6));
         Assert.assertEquals("data sting must match", "1=5;2=6", LineValuePair.toDataString(pairs));
@@ -181,7 +181,7 @@ public class LineValuePairTest {
 
     @Test
     public void toDataStringSingle() {
-        final List<LineValuePair> pairs = new ArrayList<LineValuePair>();
+        final List<LineValuePair> pairs = new ArrayList<>();
         pairs.add(new LineValuePair(1, 5));
         Assert.assertEquals("data sting must match", "1=5", LineValuePair.toDataString(pairs));
     }

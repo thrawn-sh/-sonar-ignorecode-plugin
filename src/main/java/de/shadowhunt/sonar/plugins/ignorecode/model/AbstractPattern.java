@@ -41,7 +41,7 @@ public abstract class AbstractPattern {
         }
     }
 
-    protected final SortedSet<Integer> lines = new TreeSet<Integer>();
+    protected final SortedSet<Integer> lines = new TreeSet<>();
 
     /**
      * Add another line this {@link AbstractPattern} shall match
@@ -98,7 +98,7 @@ public abstract class AbstractPattern {
      * @return the {@link SortedSet} of all lines the pattern shall match
      */
     public SortedSet<Integer> getLines() {
-        return new TreeSet<Integer>(lines);
+        return new TreeSet<>(lines);
     }
 
     @Override

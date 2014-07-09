@@ -81,7 +81,7 @@ public class LinePatternTest {
 
     @Test
     public void merge() {
-        final Collection<LinePattern> input = new ArrayList<LinePattern>();
+        final Collection<LinePattern> input = new ArrayList<>();
         input.add(LinePattern.parseLineValues("a", "[2-6]"));
         input.add(LinePattern.parseLineValues("a", "[5-8]"));
         input.add(LinePattern.parseLineValues("a", "[1,9]"));

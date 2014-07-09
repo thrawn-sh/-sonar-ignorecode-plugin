@@ -41,7 +41,7 @@ public final class IssuePattern extends AbstractPattern {
      * @throws IOException in case the {@link InputStream} can not be read
      */
     public static List<IssuePattern> parse(final InputStream input) throws IOException {
-        final List<IssuePattern> patterns = new ArrayList<IssuePattern>();
+        final List<IssuePattern> patterns = new ArrayList<>();
         for (final String line : IOUtils.readLines(input)) {
             if (StringUtils.isBlank(line) || (line.charAt(0) == '#')) {
                 continue;

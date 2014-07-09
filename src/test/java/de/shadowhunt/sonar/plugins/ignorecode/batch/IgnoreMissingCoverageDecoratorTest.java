@@ -80,7 +80,7 @@ public class IgnoreMissingCoverageDecoratorTest {
 
     private static FileSystem createFileSystemMock(final String language) {
         FileSystem fileSystem = Mockito.mock(FileSystem.class);
-        SortedSet<String> languages = new TreeSet<String>();
+        SortedSet<String> languages = new TreeSet<>();
         languages.add(language);
         Mockito.when(fileSystem.languages()).thenReturn(languages);
         return fileSystem;

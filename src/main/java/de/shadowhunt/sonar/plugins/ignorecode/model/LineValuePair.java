@@ -39,7 +39,7 @@ public class LineValuePair {
      * @return the {@link List} of {@link LineValuePair} from the given data
      */
     public static List<LineValuePair> parseDataString(final String data) {
-        final List<LineValuePair> result = new ArrayList<LineValuePair>();
+        final List<LineValuePair> result = new ArrayList<>();
         for (final String parts : data.split(";")) {
             if (StringUtils.isBlank(parts)) {
                 continue;
