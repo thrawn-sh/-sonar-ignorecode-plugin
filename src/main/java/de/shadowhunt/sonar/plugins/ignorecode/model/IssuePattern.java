@@ -75,7 +75,7 @@ public final class IssuePattern extends AbstractPattern {
 
         final String rulePattern = fields[1];
         if (StringUtils.isBlank(rulePattern)) {
-            throw new IllegalArgumentException("The second field does not define a range of lines: " + line);
+            throw new IllegalArgumentException("The second field does not define a rule pattern: " + line);
         }
 
         final String lineValues = fields[2];
