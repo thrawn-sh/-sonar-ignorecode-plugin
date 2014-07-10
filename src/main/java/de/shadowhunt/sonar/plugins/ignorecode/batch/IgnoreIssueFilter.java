@@ -71,7 +71,7 @@ public class IgnoreIssueFilter implements IssueFilter {
         try {
             fis = new FileInputStream(ignoreFile);
             final List<IssuePattern> patterns = IssuePattern.parse(fis);
-            LOGGER.info("IgnoreIssueFilter: loaded {} violation ignores from {}", patterns.size(), ignoreFile);
+            LOGGER.info("loaded {} violation ignores from {}", patterns.size(), ignoreFile);
             return patterns;
         } catch (final Exception e) {
             throw new SonarException("could not load ignores for file: " + ignoreFile, e);
@@ -126,7 +126,7 @@ public class IgnoreIssueFilter implements IssueFilter {
     public boolean accept(final Issue issue, final IssueFilterChain chain) {
         for (final IssuePattern pattern : patterns) {
             if (match(issue, pattern)) {
-                LOGGER.info("Violation {} switched off by {}", issue, pattern);
+                LOGGER.info("issues {} switched off by {}", issue, pattern);
                 return false;
             }
         }
