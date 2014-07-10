@@ -98,6 +98,16 @@ public class LineValuePair {
         return sum;
     }
 
+    public static int countWithValue(final Collection<LineValuePair> pairs, final double value) {
+        int count = 0;
+        for (final LineValuePair pair : pairs) {
+            if (value == pair.getValue()) {
+                count++;
+            }
+        }
+        return count;
+    }
+
     /**
      * Creates a {@link String} representation for the {@link List} of {@link LineValuePair}
      *
@@ -135,6 +145,10 @@ public class LineValuePair {
     public LineValuePair(final int lineNumber, final int value) {
         this.lineNumber = lineNumber;
         this.value = value;
+    }
+
+    public static int countNotWithValue(final List<LineValuePair> coverageByLines, final double value) {
+        return coverageByLines.size() - countWithValue(coverageByLines, value);
     }
 
     @Override
