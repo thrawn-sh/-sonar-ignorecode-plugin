@@ -43,6 +43,7 @@ import org.sonar.api.utils.SonarException;
 import org.sonar.api.utils.WildcardPattern;
 
 import de.shadowhunt.sonar.plugins.ignorecode.internal.MeasuresStorage;
+import de.shadowhunt.sonar.plugins.ignorecode.internal.ModifyMeasures;
 import de.shadowhunt.sonar.plugins.ignorecode.model.CoveragePattern;
 
 /**
