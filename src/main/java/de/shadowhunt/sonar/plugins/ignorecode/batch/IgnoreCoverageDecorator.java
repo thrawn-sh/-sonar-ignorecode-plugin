@@ -154,7 +154,7 @@ public class IgnoreCoverageDecorator implements Decorator {
 
     @CheckForNull
     private CoveragePattern findPattern(final Resource resource) {
-        for (CoveragePattern pattern : patterns) {
+        for (final CoveragePattern pattern : patterns) {
             final WildcardPattern wildcardPattern = WildcardPattern.create(pattern.getResourcePattern());
             if (wildcardPattern.match(resource.getKey())) {
                 return pattern;
