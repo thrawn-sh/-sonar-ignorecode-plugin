@@ -594,7 +594,7 @@
             <groupId>org.codehaus.sonar</groupId>
             <artifactId>sonar-core</artifactId>
             <version>${sonar.version}</version>
-            <scope>test</scope>
+            <scope>provided</scope>
             <exclusions>
                 <exclusion>
                     <groupId>ch.qos.logback</groupId>

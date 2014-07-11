@@ -16,53 +16,114 @@
  */
 package de.shadowhunt.sonar.plugins.ignorecode.batch;
 
-import java.util.Arrays;
+import java.io.File;
+import java.io.FileInputStream;
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
+import javax.annotation.CheckForNull;
+
 import org.apache.commons.configuration.Configuration;
+import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.sonar.api.batch.Decorator;
 import org.sonar.api.batch.DecoratorContext;
 import org.sonar.api.batch.DependsUpon;
 import org.sonar.api.batch.fs.FileSystem;
 import org.sonar.api.measures.CoreMetrics;
-import org.sonar.api.measures.Measure;
-import org.sonar.api.measures.MeasureUtils;
 import org.sonar.api.measures.Metric;
+import org.sonar.api.resources.Project;
 import org.sonar.api.resources.Resource;
 import org.sonar.api.resources.ResourceUtils;
-import org.sonar.batch.index.MeasurePersister;
+import org.sonar.api.utils.SonarException;
+import org.sonar.api.utils.WildcardPattern;
 
-import de.shadowhunt.sonar.plugins.ignorecode.model.LineValuePair;
+import de.shadowhunt.sonar.plugins.ignorecode.internal.MeasuresStorage;
+import de.shadowhunt.sonar.plugins.ignorecode.model.CoveragePattern;
 
 /**
  * Generated code as identified by the coverage.ignore, must not be covered by any unit tests.
  * Therefore the {@link IgnoreCoverageDecorator} goes through all coverage metrics and removes
  * all entries for identified sources
  */
-public class IgnoreCoverageDecorator extends AbstractOverridingDecorator {
+public class IgnoreCoverageDecorator implements Decorator {
 
     /**
      * property name that points to the ignore file: will be read from the project configuration
      */
     public static final String CONFIG_FILE = "sonar.ignorecoverage.configFile";
 
+    private static final Set<Metric> COVERAGE_METRICS;
+
+    static {
+        final Set<Metric> coverageMetrics = new HashSet<>();
+        coverageMetrics.add(CoreMetrics.BRANCH_COVERAGE);
+        coverageMetrics.add(CoreMetrics.CONDITIONS_BY_LINE);
+        coverageMetrics.add(CoreMetrics.CONDITIONS_TO_COVER);
+        coverageMetrics.add(CoreMetrics.COVERAGE);
+        coverageMetrics.add(CoreMetrics.COVERAGE_LINE_HITS_DATA);
+        coverageMetrics.add(CoreMetrics.COVERED_CONDITIONS_BY_LINE);
+        coverageMetrics.add(CoreMetrics.LINES_TO_COVER);
+        coverageMetrics.add(CoreMetrics.LINE_COVERAGE);
+        coverageMetrics.add(CoreMetrics.UNCOVERED_CONDITIONS);
+        coverageMetrics.add(CoreMetrics.UNCOVERED_LINES);
+        COVERAGE_METRICS = Collections.unmodifiableSet(coverageMetrics);
+    }
+
     private static final Logger LOGGER = LoggerFactory.getLogger(IgnoreCoverageDecorator.class);
 
-    private final Map<String, Set<Integer>> ignores;
+    static final List<CoveragePattern> loadPatterns(final Configuration configuration) {
+        if (configuration == null) {
+            return Collections.emptyList();
+        }
+
+        final String fileLocation = configuration.getString(CONFIG_FILE);
+        if (StringUtils.isBlank(fileLocation)) {
+            LOGGER.info("no ignore file configured for property: {}", CONFIG_FILE);
+            return Collections.emptyList();
+        }
+
+        final File ignoreFile = new File(fileLocation);
+        if (!ignoreFile.isFile()) {
+            LOGGER.error("could not find ignore file: {}", ignoreFile);
+            return Collections.emptyList();
+        }
+
+        FileInputStream fis = null;
+        try {
+            fis = new FileInputStream(ignoreFile);
+            final List<CoveragePattern> patterns = CoveragePattern.parse(fis);
+            LOGGER.info("loaded {} coverage ignores from {}", patterns.size(), ignoreFile);
+            return patterns;
+        } catch (final Exception e) {
+            throw new SonarException("could not load ignores for file: " + ignoreFile, e);
+        } finally {
+            IOUtils.closeQuietly(fis);
+        }
+    }
+
+    private final boolean execute;
+
+    private final List<CoveragePattern> patterns;
 
     /**
      * Create a new {@link IgnoreCoverageDecorator} that removes all coverage metrics for ignored code
      *
-     * @param persister {@link MeasurePersister} save the updated {@link Measure}s to the database (not supported via {@link DecoratorContext})
      * @param configuration project {@link Configuration}
      */
-    public IgnoreCoverageDecorator(final FileSystem fileSystem, final MeasurePersister persister, final Configuration configuration) {
-        super(fileSystem, persister);
+    public IgnoreCoverageDecorator(final Configuration configuration, final FileSystem fileSystem) {
+        execute = fileSystem.languages().contains("java");
+        patterns = loadPatterns(configuration);
+    }
 
-        ignores = loadIgnores(configuration, CONFIG_FILE);
+    private void clearCoverageMeasures(final DecoratorContext context) {
+        for (Metric metric : COVERAGE_METRICS) {
+            MeasuresStorage.clear(context, metric);
+        }
     }
 
     @Override
@@ -71,158 +132,39 @@ public class IgnoreCoverageDecorator extends AbstractOverridingDecorator {
             return;
         }
 
-        final String key = resource.getKey();
-        LOGGER.debug("processing resource with key: " + key);
-        final Set<Integer> resourceIgnores = ignores.get(key);
-        if (resourceIgnores == null) {
-            LOGGER.debug("no coverage data must be filtered");
+        final CoveragePattern pattern = findPattern(resource);
+        if (pattern == null) {
             return;
         }
 
-        if (context.getMeasure(CoreMetrics.COVERAGE_LINE_HITS_DATA) == null) {
-            LOGGER.debug("no coverage data available");
+        final Set<Integer> lines = pattern.getLines();
+        if (lines.isEmpty()) {
+            // empty is any line => remove all measures
+            clearCoverageMeasures(context);
             return;
         }
 
-        filterLineCoverage(context, resourceIgnores);
-        filterConditionCoverage(context, resourceIgnores);
-        updateCoverage(context);
+        ModifyMeasures.rewrite(context, lines);
     }
 
-    /**
-     * Returns a {@link List} of {@link Metric} this decorator wants to work with
-     *
-     * @return the {@link List} of {@link Metric} this decorator wants to work with
-     */
     @DependsUpon
-    public List<Metric> dependsUponMetrics() {
-        return Arrays.asList(CoreMetrics.BRANCH_COVERAGE, //
-                CoreMetrics.CONDITIONS_BY_LINE, //
-                CoreMetrics.CONDITIONS_TO_COVER, //
-                CoreMetrics.COVERAGE, //
-                CoreMetrics.COVERAGE_LINE_HITS_DATA, //
-                CoreMetrics.COVERED_CONDITIONS_BY_LINE, //
-                CoreMetrics.LINES_TO_COVER, //
-                CoreMetrics.LINE_COVERAGE, //
-                CoreMetrics.UNCOVERED_CONDITIONS, //
-                CoreMetrics.UNCOVERED_LINES);
+    public Set<Metric> dependsUponMetrics() {
+        return COVERAGE_METRICS;
     }
 
-    void filterConditionCoverage(final DecoratorContext context, final Set<Integer> resourceIgnores) {
-        final List<LineValuePair> conditionsByLines;
-        {
-            final Measure measure = context.getMeasure(CoreMetrics.CONDITIONS_BY_LINE);
-            if (measure == null) {
-                LOGGER.debug("no conditions in resource => skipping");
-                // resource without conditional code
-                return;
+    @CheckForNull
+    private CoveragePattern findPattern(final Resource resource) {
+        for (CoveragePattern pattern : patterns) {
+            final WildcardPattern wildcardPattern = WildcardPattern.create(pattern.getResourcePattern());
+            if (wildcardPattern.match(resource.getKey())) {
+                return pattern;
             }
-
-            conditionsByLines = LineValuePair.parseDataString(measure.getData());
-            LineValuePair.removeIgnores(conditionsByLines, resourceIgnores);
-            final String data = LineValuePair.toDataString(conditionsByLines);
-            LOGGER.debug("updating measure CONDITIONS_BY_LINE from {} to {}", measure.getData(), data);
-            measure.setData(data);
-            overrideMeasure(context, measure);
         }
-
-        final double toCover = LineValuePair.sumValues(conditionsByLines);
-        {
-            final Measure measure = context.getMeasure(CoreMetrics.CONDITIONS_TO_COVER);
-            LOGGER.debug("updating measure CONDITIONS_TO_COVER from {} to {}", measure.getValue(), toCover);
-            measure.setValue(toCover);
-            overrideMeasure(context, measure);
-        }
-
-        final List<LineValuePair> covered;
-        {
-            final Measure measure = context.getMeasure(CoreMetrics.COVERED_CONDITIONS_BY_LINE);
-            covered = LineValuePair.parseDataString(measure.getData());
-            LineValuePair.removeIgnores(covered, resourceIgnores);
-            final String data = LineValuePair.toDataString(covered);
-            LOGGER.debug("updating measure COVERED_CONDITIONS_BY_LINE from {} to {}", measure.getData(), data);
-            measure.setData(data);
-            overrideMeasure(context, measure);
-        }
-
-        final double uncovered = (toCover == 0.0) ? 0.0 : (toCover - LineValuePair.sumValues(covered));
-        {
-            final Measure measure = context.getMeasure(CoreMetrics.UNCOVERED_CONDITIONS);
-            LOGGER.debug("updating measure UNCOVERED_CONDITIONS from {} to {}", measure.getValue(), uncovered);
-            measure.setValue(uncovered);
-            overrideMeasure(context, measure);
-        }
-
-        {
-            final Measure measure = context.getMeasure(CoreMetrics.BRANCH_COVERAGE);
-            final double value;
-            if (toCover > 0) {
-                value = ((toCover - uncovered) * 100.0) / toCover;
-            } else {
-                value = 0.0;
-            }
-            LOGGER.debug("updating measure BRANCH_COVERAGE from {} to {}", measure.getValue(), value);
-            measure.setValue(value);
-            overrideMeasure(context, measure);
-        }
+        return null;
     }
 
-    void filterLineCoverage(final DecoratorContext context, final Set<Integer> resourceIgnores) {
-        final List<LineValuePair> coverageByLines;
-        {
-            final Measure measure = context.getMeasure(CoreMetrics.COVERAGE_LINE_HITS_DATA);
-            coverageByLines = LineValuePair.parseDataString(measure.getData());
-            LineValuePair.removeIgnores(coverageByLines, resourceIgnores);
-            final String data = LineValuePair.toDataString(coverageByLines);
-            LOGGER.debug("updating measure COVERAGE_LINE_HITS_DATA from {} to {}", measure.getData(), data);
-            measure.setData(data);
-            overrideMeasure(context, measure);
-        }
-
-        final double toCover = coverageByLines.size();
-        {
-            final Measure measure = context.getMeasure(CoreMetrics.LINES_TO_COVER);
-            LOGGER.debug("updating measure LINES_TO_COVER from {} to {}", measure.getValue(), toCover);
-            measure.setValue(toCover);
-            overrideMeasure(context, measure);
-        }
-
-        final double uncovered = (toCover == 0.0) ? 0.0 : (toCover - LineValuePair.sumValues(coverageByLines));
-        {
-            final Measure measure = context.getMeasure(CoreMetrics.UNCOVERED_LINES);
-            LOGGER.debug("updating measure UNCOVERED_LINES from {} to {}", measure.getValue(), uncovered);
-            measure.setValue(uncovered);
-            overrideMeasure(context, measure);
-        }
-
-        {
-            final Measure measure = context.getMeasure(CoreMetrics.LINE_COVERAGE);
-            final double value;
-            if (toCover > 0) {
-                value = ((toCover - uncovered) * 100.0) / toCover;
-            } else {
-                value = 0.0;
-            }
-            LOGGER.debug("updating measure LINE_COVERAGE from {} to {}", measure.getValue(), value);
-            measure.setValue(value);
-            overrideMeasure(context, measure);
-        }
-    }
-
-    void updateCoverage(final DecoratorContext context) {
-        final double lines = MeasureUtils.getValue(context.getMeasure(CoreMetrics.LINES_TO_COVER), 0.0);
-        final double conditions = MeasureUtils.getValue(context.getMeasure(CoreMetrics.CONDITIONS_TO_COVER), 0.0);
-
-        final double uncoveredLines = MeasureUtils.getValue(context.getMeasure(CoreMetrics.UNCOVERED_LINES), 0.0);
-        final double uncoveredConditions = MeasureUtils.getValue(context.getMeasure(CoreMetrics.UNCOVERED_CONDITIONS), 0.0);
-
-        final double coveredLines = lines - uncoveredLines;
-        final double coveredConditions = conditions - uncoveredConditions;
-
-        final double coverage = ((coveredLines + coveredConditions) * 100.0) / (lines + conditions);
-        final Measure measure = context.getMeasure(CoreMetrics.COVERAGE);
-        LOGGER.debug("updating measure COVERAGE from {} to {}", measure.getValue(), coverage);
-        measure.setValue(coverage);
-        overrideMeasure(context, measure);
+    @Override
+    public boolean shouldExecuteOnProject(final Project project) {
+        return execute;
     }
 }

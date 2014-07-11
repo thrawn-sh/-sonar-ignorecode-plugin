@@ -185,4 +185,26 @@ public class LineValuePairTest {
         pairs.add(new LineValuePair(1, 5));
         Assert.assertEquals("data sting must match", "1=5", LineValuePair.toDataString(pairs));
     }
+
+    @Test
+    public void countWithValue() {
+        final List<LineValuePair> pairs = new ArrayList<>();
+        pairs.add(new LineValuePair(1, 0));
+        pairs.add(new LineValuePair(2, 1));
+        pairs.add(new LineValuePair(3, 2));
+        pairs.add(new LineValuePair(4, 0));
+        pairs.add(new LineValuePair(5, 0));
+        Assert.assertEquals("data sting must match", 3, LineValuePair.countWithValue(pairs, 0.0));
+    }
+
+    @Test
+    public void countNotWithValue() {
+        final List<LineValuePair> pairs = new ArrayList<>();
+        pairs.add(new LineValuePair(1, 0));
+        pairs.add(new LineValuePair(2, 1));
+        pairs.add(new LineValuePair(3, 2));
+        pairs.add(new LineValuePair(4, 0));
+        pairs.add(new LineValuePair(5, 0));
+        Assert.assertEquals("data sting must match", 2, LineValuePair.countNotWithValue(pairs, 0.0));
+    }
 }
