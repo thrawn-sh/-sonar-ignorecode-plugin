@@ -43,7 +43,7 @@ public class IgnoreCoverageMeasurementFilter implements MeasurementFilter {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(IgnoreCoverageMeasurementFilter.class);
 
-    private final ModifyMeasures modifyMeasures = new ModifyMeasures();
+    private ModifyMeasures modifyMeasures = new ModifyMeasures();
 
     private final List<CoveragePattern> patterns;
 
@@ -87,6 +87,10 @@ public class IgnoreCoverageMeasurementFilter implements MeasurementFilter {
         return true;
     }
 
+    ModifyMeasures getModifyMeasures() {
+        return modifyMeasures;
+    }
+
     private void rewrite(final Measure measure, final Set<Integer> lines) {
         final String metricKey = measure.getMetricKey();
         switch (metricKey) {
@@ -100,5 +104,9 @@ public class IgnoreCoverageMeasurementFilter implements MeasurementFilter {
                 modifyMeasures.filterLineValuePairs(measure, lines);
                 break;
         }
+    }
+
+    void setModifyMeasures(final ModifyMeasures modifyMeasures) {
+        this.modifyMeasures = modifyMeasures;
     }
 }

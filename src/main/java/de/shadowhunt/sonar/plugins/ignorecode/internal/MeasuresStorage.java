@@ -31,7 +31,7 @@ import org.sonar.api.resources.Resource;
 import org.sonar.api.utils.SonarException;
 import org.sonar.batch.index.Bucket;
 
-public class MeasuresStorage {
+class MeasuresStorage {
 
     @CheckForNull
     static ListMultimap<String, Measure> getMeasuresByMetric(final DecoratorContext context) {
@@ -47,6 +47,9 @@ public class MeasuresStorage {
             }
 
             final Bucket bucket = buckets.get(context.getResource());
+            if (bucket == null) {
+                return null;
+            }
             return getPrivateField(bucket, "measuresByMetric");
         } catch (final Exception e) {
             throw new SonarException("could not replace measure", e);

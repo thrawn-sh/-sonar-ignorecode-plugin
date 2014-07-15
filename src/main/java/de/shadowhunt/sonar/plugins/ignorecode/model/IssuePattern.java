@@ -96,7 +96,7 @@ public final class IssuePattern extends AbstractPattern {
      * @param resourcePattern pattern that describes the resources this {@link IssuePattern} shall match
      * @param rulePattern pattern that describes the rules this {@link IssuePattern} shall match
      */
-    public IssuePattern(final String resourcePattern, final String rulePattern, SortedSet<Integer> lines) {
+    public IssuePattern(final String resourcePattern, final String rulePattern, final SortedSet<Integer> lines) {
         super(resourcePattern, lines);
         this.rulePattern = rulePattern;
     }

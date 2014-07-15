@@ -27,6 +27,7 @@ import org.slf4j.LoggerFactory;
 import org.sonar.api.batch.DecoratorContext;
 import org.sonar.api.measures.CoreMetrics;
 import org.sonar.api.measures.Measure;
+import org.sonar.api.measures.Metric;
 import org.sonar.api.utils.KeyValueFormat;
 
 public class ModifyMeasures {
@@ -41,7 +42,7 @@ public class ModifyMeasures {
 
     static int countWithValue(final Map<Integer, Integer> data, final double value) {
         int count = 0;
-        for (Map.Entry<Integer, Integer> entry : data.entrySet()) {
+        for (final Map.Entry<Integer, Integer> entry : data.entrySet()) {
             if (entry.getValue() == value) {
                 count++;
             }
@@ -64,6 +65,10 @@ public class ModifyMeasures {
     }
 
     private MeasuresStorage measuresStorage = new MeasuresStorage();
+
+    public void clear(final DecoratorContext context, final Metric metric) {
+        measuresStorage.clear(context, metric);
+    }
 
     @CheckForNull
     Map<String, Map<Integer, Integer>> filterConditionsData(final DecoratorContext context, final Set<Integer> lines) {

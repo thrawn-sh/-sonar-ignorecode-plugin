@@ -39,7 +39,6 @@ import org.sonar.api.resources.ResourceUtils;
 import org.sonar.api.utils.SonarException;
 import org.sonar.api.utils.WildcardPattern;
 
-import de.shadowhunt.sonar.plugins.ignorecode.internal.MeasuresStorage;
 import de.shadowhunt.sonar.plugins.ignorecode.internal.ModifyMeasures;
 import de.shadowhunt.sonar.plugins.ignorecode.model.CoveragePattern;
 
@@ -57,8 +56,6 @@ public class IgnoreCoverageDecorator implements Decorator {
 
     public static final Set<Metric> CONSUMED_METRICS;
 
-    public static final Set<Metric> CREATED_METRICS;
-
     static {
         final Set<Metric> consumedMetrics = new HashSet<>();
         consumedMetrics.add(CoreMetrics.CONDITIONS_BY_LINE);
@@ -71,15 +68,6 @@ public class IgnoreCoverageDecorator implements Decorator {
         consumedMetrics.add(CoreMetrics.UNCOVERED_CONDITIONS);
         consumedMetrics.add(CoreMetrics.UNCOVERED_LINES);
         CONSUMED_METRICS = Collections.unmodifiableSet(consumedMetrics);
-
-        final Set<Metric> createdMetrics = new HashSet<>();
-        createdMetrics.add(CoreMetrics.CONDITIONS_TO_COVER);
-        // createdMetrics.add(CoreMetrics.COVERAGE);
-        createdMetrics.add(CoreMetrics.LINES_TO_COVER);
-        createdMetrics.add(CoreMetrics.LINE_COVERAGE);
-        createdMetrics.add(CoreMetrics.UNCOVERED_CONDITIONS);
-        createdMetrics.add(CoreMetrics.UNCOVERED_LINES);
-        CREATED_METRICS = Collections.unmodifiableSet(createdMetrics);
     }
 
     private static final Logger LOGGER = LoggerFactory.getLogger(IgnoreCoverageDecorator.class);
@@ -114,11 +102,9 @@ public class IgnoreCoverageDecorator implements Decorator {
         }
     }
 
-    private final ModifyMeasures modifyMeasures = new ModifyMeasures();
+    private ModifyMeasures modifyMeasures = new ModifyMeasures();
 
     private final List<CoveragePattern> patterns;
-
-    private final MeasuresStorage storage = new MeasuresStorage();
 
     /**
      * Create a new {@link IgnoreCoverageDecorator} that removes all coverage metrics for ignored code
@@ -130,8 +116,8 @@ public class IgnoreCoverageDecorator implements Decorator {
     }
 
     private void clearAllMeasures(final DecoratorContext context) {
-        for (Metric metric : CONSUMED_METRICS) {
-            storage.clear(context, metric);
+        for (final Metric metric : CONSUMED_METRICS) {
+            modifyMeasures.clear(context, metric);
         }
     }
 
@@ -139,11 +125,6 @@ public class IgnoreCoverageDecorator implements Decorator {
     public Set<Metric> consumedMetrics() {
         return CONSUMED_METRICS;
     }
-
-//    @DependedUpon
-//    public Set<Metric> createdMetrics() {
-//        return CREATED_METRICS;
-//    }
 
     @Override
     public void decorate(final Resource resource, final DecoratorContext context) {
@@ -168,6 +149,14 @@ public class IgnoreCoverageDecorator implements Decorator {
 
             modifyMeasures.rewrite(context, lines);
         }
+    }
+
+    ModifyMeasures getModifyMeasures() {
+        return modifyMeasures;
+    }
+
+    void setModifyMeasures(final ModifyMeasures modifyMeasures) {
+        this.modifyMeasures = modifyMeasures;
     }
 
     @Override

@@ -37,7 +37,7 @@ public class ModifyMeasuresTest {
 
     private static final double DELTA = 0.001;
 
-    private static Map<Integer, Integer> parse(String data) {
+    private static Map<Integer, Integer> parse(final String data) {
         return KeyValueFormat.parse(data, CONVERTER, CONVERTER);
     }
 
@@ -66,7 +66,7 @@ public class ModifyMeasuresTest {
     public void testFilterConditionsData() throws Exception {
         final Measure total = new Measure(CoreMetrics.CONDITIONS_BY_LINE, "1=2;2=0;3=2;4=4");
         final Measure covered = new Measure(CoreMetrics.COVERED_CONDITIONS_BY_LINE, "1=1;2=0;3=2;4=2");
-        DecoratorContext context = Mockito.mock(DecoratorContext.class);
+        final DecoratorContext context = Mockito.mock(DecoratorContext.class);
         Mockito.when(context.getMeasure(CoreMetrics.CONDITIONS_BY_LINE)).thenReturn(total);
         Mockito.when(context.getMeasure(CoreMetrics.COVERED_CONDITIONS_BY_LINE)).thenReturn(covered);
 
@@ -79,7 +79,7 @@ public class ModifyMeasuresTest {
 
     @Test
     public void testFilterConditionsDataNull() throws Exception {
-        DecoratorContext context = Mockito.mock(DecoratorContext.class);
+        final DecoratorContext context = Mockito.mock(DecoratorContext.class);
         Mockito.when(context.getMeasure(CoreMetrics.CONDITIONS_BY_LINE)).thenReturn(null);
 
         final Map<String, Map<Integer, Integer>> conditionsData = modifyMeasures.filterConditionsData(context, toSet());
@@ -89,7 +89,7 @@ public class ModifyMeasuresTest {
     @Test
     public void testFilterLinesData() throws Exception {
         final Measure measure = new Measure(CoreMetrics.COVERAGE_LINE_HITS_DATA, "1=2;2=2;3=0;4=2");
-        DecoratorContext context = Mockito.mock(DecoratorContext.class);
+        final DecoratorContext context = Mockito.mock(DecoratorContext.class);
         Mockito.when(context.getMeasure(CoreMetrics.COVERAGE_LINE_HITS_DATA)).thenReturn(measure);
 
         final Map<Integer, Integer> result = modifyMeasures.filterLinesData(context, toSet(2, 3));
@@ -99,7 +99,7 @@ public class ModifyMeasuresTest {
 
     @Test
     public void testFilterLinesDataNull() throws Exception {
-        DecoratorContext context = Mockito.mock(DecoratorContext.class);
+        final DecoratorContext context = Mockito.mock(DecoratorContext.class);
         Mockito.when(context.getMeasure(CoreMetrics.COVERAGE_LINE_HITS_DATA)).thenReturn(null);
 
         final Map<Integer, Integer> lineData = modifyMeasures.filterLinesData(context, toSet());
@@ -109,7 +109,7 @@ public class ModifyMeasuresTest {
     @Test
     public void testRewriteConditionsCountTotal() throws Exception {
         final Measure measure = new Measure(CoreMetrics.CONDITIONS_TO_COVER, 42.0);
-        DecoratorContext context = Mockito.mock(DecoratorContext.class);
+        final DecoratorContext context = Mockito.mock(DecoratorContext.class);
         Mockito.when(context.getMeasure(CoreMetrics.CONDITIONS_TO_COVER)).thenReturn(measure);
 
         final long result = modifyMeasures.rewriteConditionsCountTotal(context, conditionData);
@@ -120,7 +120,7 @@ public class ModifyMeasuresTest {
     @Test
     public void testRewriteConditionsCountUncovered() throws Exception {
         final Measure measure = new Measure(CoreMetrics.UNCOVERED_CONDITIONS, 42.0);
-        DecoratorContext context = Mockito.mock(DecoratorContext.class);
+        final DecoratorContext context = Mockito.mock(DecoratorContext.class);
         Mockito.when(context.getMeasure(CoreMetrics.UNCOVERED_CONDITIONS)).thenReturn(measure);
 
         final long result = modifyMeasures.rewriteConditionsCountUncovered(context, conditionData);
@@ -131,7 +131,7 @@ public class ModifyMeasuresTest {
     @Test
     public void testRewriteConditionsCoveragePercentage() throws Exception {
         final Measure measure = new Measure(CoreMetrics.BRANCH_COVERAGE, 42.0);
-        DecoratorContext context = Mockito.mock(DecoratorContext.class);
+        final DecoratorContext context = Mockito.mock(DecoratorContext.class);
         Mockito.when(context.getMeasure(CoreMetrics.BRANCH_COVERAGE)).thenReturn(measure);
 
         final double result = modifyMeasures.rewriteConditionsCoveragePercentage(context, 200L, 30L);
@@ -146,7 +146,7 @@ public class ModifyMeasuresTest {
     @Test
     public void testRewriteLinesCountTotal() throws Exception {
         final Measure measure = new Measure(CoreMetrics.LINES_TO_COVER, 42.0);
-        DecoratorContext context = Mockito.mock(DecoratorContext.class);
+        final DecoratorContext context = Mockito.mock(DecoratorContext.class);
         Mockito.when(context.getMeasure(CoreMetrics.LINES_TO_COVER)).thenReturn(measure);
 
         final Map<Integer, Integer> lineData = parse("1=2;2=2;3=0;4=2");
@@ -158,7 +158,7 @@ public class ModifyMeasuresTest {
     @Test
     public void testRewriteLinesCountUncovered() throws Exception {
         final Measure measure = new Measure(CoreMetrics.UNCOVERED_LINES, 42.0);
-        DecoratorContext context = Mockito.mock(DecoratorContext.class);
+        final DecoratorContext context = Mockito.mock(DecoratorContext.class);
         Mockito.when(context.getMeasure(CoreMetrics.UNCOVERED_LINES)).thenReturn(measure);
 
         final Map<Integer, Integer> lineData = parse("1=1;2=1;3=0;4=1");
@@ -170,7 +170,7 @@ public class ModifyMeasuresTest {
     @Test
     public void testRewriteLinesCoveragePercentage() throws Exception {
         final Measure measure = new Measure(CoreMetrics.LINE_COVERAGE, 42.0);
-        DecoratorContext context = Mockito.mock(DecoratorContext.class);
+        final DecoratorContext context = Mockito.mock(DecoratorContext.class);
         Mockito.when(context.getMeasure(CoreMetrics.LINE_COVERAGE)).thenReturn(measure);
 
         final double result = modifyMeasures.rewriteLinesCoveragePercentage(context, 200L, 30L);
@@ -185,7 +185,7 @@ public class ModifyMeasuresTest {
     @Test
     public void testRewriteOverallCoverage() throws Exception {
         final Measure measure = new Measure(CoreMetrics.COVERAGE, 42.0);
-        DecoratorContext context = Mockito.mock(DecoratorContext.class);
+        final DecoratorContext context = Mockito.mock(DecoratorContext.class);
         Mockito.when(context.getMeasure(CoreMetrics.COVERAGE)).thenReturn(measure);
 
         final double result = modifyMeasures.rewriteOverallCoverage(context, 200L, 30L, 50L, 20L);
@@ -202,8 +202,8 @@ public class ModifyMeasuresTest {
     }
 
     private Set<Integer> toSet(final int... values) {
-        Set<Integer> set = new HashSet<>(values.length);
-        for (int value : values) {
+        final Set<Integer> set = new HashSet<>(values.length);
+        for (final int value : values) {
             set.add(value);
         }
         return set;
