@@ -299,6 +299,7 @@
                     <usedDependencies>
                         <!-- don't log to stdout during test -->
                         <usedDependency>org.slf4j:slf4j-nop</usedDependency>
+                        <usedDependency>org.mybatis:mybatis</usedDependency>
                     </usedDependencies>
                 </configuration>
                 <executions>

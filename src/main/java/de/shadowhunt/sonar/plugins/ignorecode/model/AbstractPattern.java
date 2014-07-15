@@ -24,33 +24,7 @@ import org.apache.commons.lang.StringUtils;
 /**
  * {@link AbstractPattern} is the base for all patterns that must handle lines
  */
-public abstract class AbstractPattern {
-
-    protected static <T extends AbstractPattern> void parseLineValues(final T pattern, final String lineValues) {
-        final String s = StringUtils.substringBetween(StringUtils.trim(lineValues), "[", "]");
-        final String[] parts = StringUtils.split(s, ',');
-        for (final String part : parts) {
-            if (StringUtils.contains(part, '-')) {
-                final String[] range = StringUtils.split(part, '-');
-                final int from = Integer.parseInt(range[0]);
-                final int to = Integer.parseInt(range[1]);
-                pattern.addLines(from, to);
-            } else {
-                pattern.addLine(Integer.parseInt(part));
-            }
-        }
-    }
-
-    protected final SortedSet<Integer> lines = new TreeSet<>();
-
-    /**
-     * Add another line this {@link AbstractPattern} shall match
-     *
-     * @param line the {@link AbstractPattern} shall match
-     */
-    public void addLine(final int line) {
-        lines.add(line);
-    }
+abstract class AbstractPattern {
 
     /**
      * Add a range of lines this {@link AbstractPattern} shall match, all lines between
@@ -61,7 +35,7 @@ public abstract class AbstractPattern {
      *
      * @throws IllegalArgumentException if from is not greater or equal than to
      */
-    public void addLines(final int from, final int to) {
+    static void addLines(final SortedSet<Integer> lines, final int from, final int to) {
         if (to < from) {
             throw new IllegalArgumentException("from: " + from + " must be greater or equal than to: " + to);
         }
@@ -70,25 +44,54 @@ public abstract class AbstractPattern {
         }
     }
 
+    static SortedSet<Integer> parseLineValues(final String lineValues) {
+        final SortedSet<Integer> lines = new TreeSet<>();
+        if ("*".equals(lineValues)) {
+            return lines;
+        }
+
+        final String s = StringUtils.substringBetween(StringUtils.trim(lineValues), "[", "]");
+        final String[] parts = StringUtils.split(s, ',');
+        for (final String part : parts) {
+            if (StringUtils.contains(part, '-')) {
+                final String[] range = StringUtils.split(part, '-');
+                final int from = Integer.parseInt(range[0]);
+                final int to = Integer.parseInt(range[1]);
+                addLines(lines, from, to);
+            } else {
+                lines.add(Integer.parseInt(part));
+            }
+        }
+        return lines;
+    }
+
+    protected final SortedSet<Integer> lines;
+
+    protected final String resourcePattern;
+
+    protected AbstractPattern(final String resourcePattern, final SortedSet<Integer> lines) {
+        this.resourcePattern = resourcePattern;
+        this.lines = new TreeSet<>(lines);
+    }
+
     @Override
-    public boolean equals(final Object obj) {
-        if (this == obj) {
+    public boolean equals(final Object o) {
+        if (this == o) {
             return true;
         }
-        if (obj == null) {
+        if (!(o instanceof AbstractPattern)) {
             return false;
         }
-        if (getClass() != obj.getClass()) {
+
+        final AbstractPattern that = (AbstractPattern) o;
+
+        if (!lines.equals(that.lines)) {
             return false;
         }
-        final AbstractPattern other = (AbstractPattern) obj;
-        if (lines == null) {
-            if (other.lines != null) {
-                return false;
-            }
-        } else if (!lines.equals(other.lines)) {
+        if (!resourcePattern.equals(that.resourcePattern)) {
             return false;
         }
+
         return true;
     }
 
@@ -101,11 +104,20 @@ public abstract class AbstractPattern {
         return new TreeSet<>(lines);
     }
 
+    /**
+     * Returns a pattern that describes the resources that shall match
+     *
+     * @return the pattern that describes the resources that shall match
+     */
+    public String getResourcePattern() {
+        return resourcePattern;
+    }
+
     @Override
     public int hashCode() {
-        final int prime = 31;
-        int result = 1;
-        result = (prime * result) + ((lines == null) ? 0 : lines.hashCode());
+        int result = lines.hashCode();
+        result = 31 * result + resourcePattern.hashCode();
         return result;
     }
+
 }

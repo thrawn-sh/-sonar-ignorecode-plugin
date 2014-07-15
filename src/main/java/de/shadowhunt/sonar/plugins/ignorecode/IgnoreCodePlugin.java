@@ -31,6 +31,10 @@ public class IgnoreCodePlugin extends SonarPlugin {
 
     @Override
     public List getExtensions() {
-        return ImmutableList.of(IgnoreCoverageDecorator.class, IgnoreIssueFilter.class);
+        return ImmutableList.of( //
+                IgnoreCoverageDecorator.class, //
+                // IgnoreCoverageMeasurementFilter.class, //
+                IgnoreIssueFilter.class //
+        );
     }
 }

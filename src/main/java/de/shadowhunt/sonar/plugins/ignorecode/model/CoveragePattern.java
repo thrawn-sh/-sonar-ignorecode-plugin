@@ -20,11 +20,12 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.SortedSet;
 
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringUtils;
 
-public class CoveragePattern extends AbstractPattern {
+public final class CoveragePattern extends AbstractPattern {
 
     /**
      * Create a list of {@link CoveragePattern} from the given {@link java.io.InputStream}
@@ -54,8 +55,8 @@ public class CoveragePattern extends AbstractPattern {
      * Create a new {@link CoveragePattern} from the given line describing the resourcePattern, the rulePattern and
      * the lines in the resource
      *
-     * @param line each line must consist out of the resourcePattern, rulePattern and lineValues,
-     * separated by a ';' (for a description of lineValues see {@link #parseLineValues(String, String)}
+     * @param line each line must consist out of the resourcePattern and lineValues,
+     * separated by a ';'
      *
      * @return the new {@link CoveragePattern} from the given line
      */
@@ -75,38 +76,33 @@ public class CoveragePattern extends AbstractPattern {
             throw new IllegalArgumentException("The third field does not define a range of lines: " + line);
         }
 
-        return parseLineValues(resourcePattern, lineValues);
+        final SortedSet<Integer> lines = parseLineValues(lineValues);
+        return new CoveragePattern(resourcePattern, lines);
     }
 
-    /**
-     * Create a new {@link CoveragePattern} for the given resourcePattern and rulePattern by parsing the lineValues
-     *
-     * @param resourcePattern pattern describing the resources that will be matched
-     * @param lineValues pattern that describes the lines the {@link CoveragePattern} shall match, lines can be
-     * given as values ([1,3]) or as ranges ([5-10]) or a combination of both ([1,3,5-10])
-     *
-     * @return the new {@link CoveragePattern} for the given resource by parsing the lineValues
-     */
-    public static CoveragePattern parseLineValues(final String resourcePattern, final String lineValues) {
-        final CoveragePattern pattern = new CoveragePattern(resourcePattern);
-        if (!"*".equals(lineValues)) {
-            parseLineValues(pattern, lineValues);
+    public CoveragePattern(final String resourcePattern, final SortedSet<Integer> lines) {
+        super(resourcePattern, lines);
+    }
+
+    @Override
+    public boolean equals(final Object o) {
+        if (this == o) {
+            return true;
         }
-        return pattern;
+        if (!(o instanceof IssuePattern)) {
+            return false;
+        }
+        return super.equals(o);
     }
 
-    private final String resourcePattern;
-
-    public CoveragePattern(final String resourcePattern) {
-        this.resourcePattern = resourcePattern;
-    }
-
-    /**
-     * Returns a pattern that describes the resources that shall match
-     *
-     * @return the pattern that describes the resources that shall match
-     */
-    public String getResourcePattern() {
-        return resourcePattern;
+    @Override
+    public String toString() {
+        final StringBuilder builder = new StringBuilder();
+        builder.append("CoveragePattern [resourcePattern=");
+        builder.append(resourcePattern);
+        builder.append(", lines=");
+        builder.append(lines);
+        builder.append(']');
+        return builder.toString();
     }
 }

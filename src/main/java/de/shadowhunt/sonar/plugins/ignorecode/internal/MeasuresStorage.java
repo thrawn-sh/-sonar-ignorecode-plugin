@@ -1,3 +1,19 @@
+/**
+ * This file is part of Sonar Ignore Code Plugin.
+ *
+ * Sonar Ignore Code Plugin is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * Sonar Ignore Code Plugin is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with Sonar Ignore Code Plugin.  If not, see <http://www.gnu.org/licenses/>.
+ */
 package de.shadowhunt.sonar.plugins.ignorecode.internal;
 
 import java.lang.reflect.Field;
@@ -16,25 +32,6 @@ import org.sonar.api.utils.SonarException;
 import org.sonar.batch.index.Bucket;
 
 public class MeasuresStorage {
-
-    public static void clear(final DecoratorContext context, final Metric metric) {
-        try {
-            clear0(context, metric);
-        } catch (final Exception e) {
-            throw new SonarException("could not replace measure", e);
-        }
-    }
-
-    static void clear0(DecoratorContext context, Metric metric) throws Exception {
-        final String metricKey = metric.getKey();
-
-        final ListMultimap<String, Measure> measuresByMetric = getMeasuresByMetric(context);
-        final List<Measure> metricMeasures = measuresByMetric.get(metricKey);
-        if (metricMeasures == null) {
-            return;
-        }
-        metricMeasures.clear();
-    }
 
     @CheckForNull
     static ListMultimap<String, Measure> getMeasuresByMetric(final DecoratorContext context) throws Exception {
@@ -61,7 +58,26 @@ public class MeasuresStorage {
         return (E) field.get(object);
     }
 
-    public static void replace(final DecoratorContext context, final Measure measure) {
+    public void clear(final DecoratorContext context, final Metric metric) {
+        try {
+            clear0(context, metric);
+        } catch (final Exception e) {
+            throw new SonarException("could not replace measure", e);
+        }
+    }
+
+    void clear0(DecoratorContext context, Metric metric) throws Exception {
+        final String metricKey = metric.getKey();
+
+        final ListMultimap<String, Measure> measuresByMetric = getMeasuresByMetric(context);
+        final List<Measure> metricMeasures = measuresByMetric.get(metricKey);
+        if (metricMeasures == null) {
+            return;
+        }
+        metricMeasures.clear();
+    }
+
+    public void replace(final DecoratorContext context, final Measure measure) {
         try {
             replace0(context, measure);
         } catch (final Exception e) {
@@ -69,7 +85,7 @@ public class MeasuresStorage {
         }
     }
 
-    static void replace0(DecoratorContext context, Measure measure) throws Exception {
+    void replace0(DecoratorContext context, Measure measure) throws Exception {
         final String metricKey = measure.getMetricKey();
 
         final ListMultimap<String, Measure> measuresByMetric = getMeasuresByMetric(context);

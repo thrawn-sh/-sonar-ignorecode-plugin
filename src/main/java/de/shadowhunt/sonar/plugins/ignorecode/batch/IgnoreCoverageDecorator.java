@@ -23,8 +23,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import javax.annotation.CheckForNull;
-
 import org.apache.commons.configuration.Configuration;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringUtils;
@@ -33,7 +31,6 @@ import org.slf4j.LoggerFactory;
 import org.sonar.api.batch.Decorator;
 import org.sonar.api.batch.DecoratorContext;
 import org.sonar.api.batch.DependsUpon;
-import org.sonar.api.batch.fs.FileSystem;
 import org.sonar.api.measures.CoreMetrics;
 import org.sonar.api.measures.Metric;
 import org.sonar.api.resources.Project;
@@ -58,21 +55,31 @@ public class IgnoreCoverageDecorator implements Decorator {
      */
     public static final String CONFIG_FILE = "sonar.ignorecoverage.configFile";
 
-    private static final Set<Metric> COVERAGE_METRICS;
+    public static final Set<Metric> CONSUMED_METRICS;
+
+    public static final Set<Metric> CREATED_METRICS;
 
     static {
-        final Set<Metric> coverageMetrics = new HashSet<>();
-        coverageMetrics.add(CoreMetrics.BRANCH_COVERAGE);
-        coverageMetrics.add(CoreMetrics.CONDITIONS_BY_LINE);
-        coverageMetrics.add(CoreMetrics.CONDITIONS_TO_COVER);
-        coverageMetrics.add(CoreMetrics.COVERAGE);
-        coverageMetrics.add(CoreMetrics.COVERAGE_LINE_HITS_DATA);
-        coverageMetrics.add(CoreMetrics.COVERED_CONDITIONS_BY_LINE);
-        coverageMetrics.add(CoreMetrics.LINES_TO_COVER);
-        coverageMetrics.add(CoreMetrics.LINE_COVERAGE);
-        coverageMetrics.add(CoreMetrics.UNCOVERED_CONDITIONS);
-        coverageMetrics.add(CoreMetrics.UNCOVERED_LINES);
-        COVERAGE_METRICS = Collections.unmodifiableSet(coverageMetrics);
+        final Set<Metric> consumedMetrics = new HashSet<>();
+        consumedMetrics.add(CoreMetrics.CONDITIONS_BY_LINE);
+        consumedMetrics.add(CoreMetrics.CONDITIONS_TO_COVER);
+        consumedMetrics.add(CoreMetrics.COVERAGE);
+        consumedMetrics.add(CoreMetrics.COVERAGE_LINE_HITS_DATA);
+        consumedMetrics.add(CoreMetrics.COVERED_CONDITIONS_BY_LINE);
+        consumedMetrics.add(CoreMetrics.LINES_TO_COVER);
+        consumedMetrics.add(CoreMetrics.LINE_COVERAGE);
+        consumedMetrics.add(CoreMetrics.UNCOVERED_CONDITIONS);
+        consumedMetrics.add(CoreMetrics.UNCOVERED_LINES);
+        CONSUMED_METRICS = Collections.unmodifiableSet(consumedMetrics);
+
+        final Set<Metric> createdMetrics = new HashSet<>();
+        createdMetrics.add(CoreMetrics.CONDITIONS_TO_COVER);
+        // createdMetrics.add(CoreMetrics.COVERAGE);
+        createdMetrics.add(CoreMetrics.LINES_TO_COVER);
+        createdMetrics.add(CoreMetrics.LINE_COVERAGE);
+        createdMetrics.add(CoreMetrics.UNCOVERED_CONDITIONS);
+        createdMetrics.add(CoreMetrics.UNCOVERED_LINES);
+        CREATED_METRICS = Collections.unmodifiableSet(createdMetrics);
     }
 
     private static final Logger LOGGER = LoggerFactory.getLogger(IgnoreCoverageDecorator.class);
@@ -107,25 +114,36 @@ public class IgnoreCoverageDecorator implements Decorator {
         }
     }
 
-    private final boolean execute;
+    private ModifyMeasures modifyMeasures = new ModifyMeasures();
 
     private final List<CoveragePattern> patterns;
+
+    private MeasuresStorage storage = new MeasuresStorage();
 
     /**
      * Create a new {@link IgnoreCoverageDecorator} that removes all coverage metrics for ignored code
      *
      * @param configuration project {@link Configuration}
      */
-    public IgnoreCoverageDecorator(final Configuration configuration, final FileSystem fileSystem) {
-        execute = fileSystem.languages().contains("java");
+    public IgnoreCoverageDecorator(final Configuration configuration) {
         patterns = loadPatterns(configuration);
     }
 
-    private void clearCoverageMeasures(final DecoratorContext context) {
-        for (Metric metric : COVERAGE_METRICS) {
-            MeasuresStorage.clear(context, metric);
+    private void clearAllMeasures(final DecoratorContext context) {
+        for (Metric metric : CONSUMED_METRICS) {
+            storage.clear(context, metric);
         }
     }
+
+    @DependsUpon
+    public Set<Metric> consumedMetrics() {
+        return CONSUMED_METRICS;
+    }
+
+//    @DependedUpon
+//    public Set<Metric> createdMetrics() {
+//        return CREATED_METRICS;
+//    }
 
     @Override
     public void decorate(final Resource resource, final DecoratorContext context) {
@@ -133,39 +151,27 @@ public class IgnoreCoverageDecorator implements Decorator {
             return;
         }
 
-        final CoveragePattern pattern = findPattern(resource);
-        if (pattern == null) {
-            return;
-        }
+        LOGGER.warn(resource.getKey());
 
-        final Set<Integer> lines = pattern.getLines();
-        if (lines.isEmpty()) {
-            // empty is any line => remove all measures
-            clearCoverageMeasures(context);
-            return;
-        }
-
-        ModifyMeasures.rewrite(context, lines);
-    }
-
-    @DependsUpon
-    public Set<Metric> dependsUponMetrics() {
-        return COVERAGE_METRICS;
-    }
-
-    @CheckForNull
-    private CoveragePattern findPattern(final Resource resource) {
         for (final CoveragePattern pattern : patterns) {
             final WildcardPattern wildcardPattern = WildcardPattern.create(pattern.getResourcePattern());
-            if (wildcardPattern.match(resource.getKey())) {
-                return pattern;
+            if (!wildcardPattern.match(resource.getKey())) {
+                continue;
             }
+
+            final Set<Integer> lines = pattern.getLines();
+            if (lines.isEmpty()) {
+                // empty is any line => remove all measures
+                clearAllMeasures(context);
+                break;
+            }
+
+            modifyMeasures.rewrite(context, lines);
         }
-        return null;
     }
 
     @Override
     public boolean shouldExecuteOnProject(final Project project) {
-        return execute;
+        return true;
     }
 }

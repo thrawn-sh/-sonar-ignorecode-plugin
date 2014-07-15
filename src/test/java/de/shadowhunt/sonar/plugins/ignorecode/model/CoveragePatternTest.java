@@ -29,7 +29,7 @@ import org.apache.commons.io.IOUtils;
 import org.junit.Assert;
 import org.junit.Test;
 
-public class IssuePatternTest {
+public class CoveragePatternTest {
 
     @Test
     public void testAddLine() throws Exception {
@@ -37,7 +37,7 @@ public class IssuePatternTest {
         lines.add(1);
         lines.add(3);
         lines.add(5);
-        final IssuePattern pattern = new IssuePattern("resourcePattern", "rulePattern", lines);
+        final CoveragePattern pattern = new CoveragePattern("resourcePattern", lines);
 
         final SortedSet<Integer> full = pattern.getLines();
         Assert.assertNotNull("SortedSet must not be null", full);
@@ -50,9 +50,9 @@ public class IssuePatternTest {
     @Test
     public void testAddLines() throws Exception {
         final SortedSet<Integer> lines = new TreeSet<>();
-        IssuePattern.addLines(lines, 2, 2);
-        IssuePattern.addLines(lines, 4, 6);
-        final IssuePattern pattern = new IssuePattern("resourcePattern", "rulePattern", lines);
+        CoveragePattern.addLines(lines, 2, 2);
+        CoveragePattern.addLines(lines, 4, 6);
+        final CoveragePattern pattern = new CoveragePattern("resourcePattern", lines);
 
         final SortedSet<Integer> full = pattern.getLines();
         Assert.assertNotNull("SortedSet must not be null", full);
@@ -66,14 +66,14 @@ public class IssuePatternTest {
     @Test(expected = IllegalArgumentException.class)
     public void testAddLinesException() throws Exception {
         final SortedSet<Integer> lines = new TreeSet<>();
-        IssuePattern.addLines(lines, 6, 4);
+        CoveragePattern.addLines(lines, 6, 4);
 
         Assert.fail("must not allow to switch from and to");
     }
 
     @Test
     public void testEmpty() throws Exception {
-        final IssuePattern pattern = new IssuePattern("resourcePattern", "rulePattern", new TreeSet<Integer>());
+        final CoveragePattern pattern = new CoveragePattern("resourcePattern", new TreeSet<Integer>());
 
         final SortedSet<Integer> empty = pattern.getLines();
         Assert.assertNotNull("SortedSet must not be null", empty);
@@ -86,19 +86,16 @@ public class IssuePatternTest {
         final PrintWriter writer = new PrintWriter(baos);
         writer.println("# comment");
         writer.println();
-        writer.println("resourcePattern;rulePattern;[2,4-6]");
+        writer.println("resourcePattern;[2,4-6]");
         writer.close();
 
         final InputStream is = new ByteArrayInputStream(baos.toByteArray());
         try {
-            final List<IssuePattern> lines = IssuePattern.parse(is);
+            final List<CoveragePattern> lines = CoveragePattern.parse(is);
             Assert.assertNotNull("List must not be null", lines);
             Assert.assertEquals("List must contain the exact number of entries", 1, lines.size());
 
-            final IssuePattern pattern = lines.get(0);
-            Assert.assertEquals("resourcePattern name must match", "resourcePattern", pattern.getResourcePattern());
-            Assert.assertEquals("rulePattern name must match", "rulePattern", pattern.getRulePattern());
-
+            final CoveragePattern pattern = lines.get(0);
             final SortedSet<Integer> full = pattern.getLines();
             Assert.assertNotNull("SortedSet must not be null", full);
             Assert.assertEquals("SortedSet must contain the exact number of entries", 4, full.size());
@@ -116,7 +113,7 @@ public class IssuePatternTest {
     public void testParseEmpty() throws IOException {
         final InputStream is = new ByteArrayInputStream(new byte[0]);
         try {
-            final List<IssuePattern> lines = IssuePattern.parse(is);
+            final List<CoveragePattern> lines = CoveragePattern.parse(is);
             Assert.assertNotNull("List must not be null", lines);
             Assert.assertEquals("List must contain the exact number of entries", 0, lines.size());
         } finally {
@@ -125,34 +122,27 @@ public class IssuePatternTest {
     }
 
     @Test(expected = IllegalArgumentException.class)
-    public void testParseLineMissingBroken() throws Exception {
-        IssuePattern.parseLine("rulePattern;[2-3]");
-        Assert.fail("must not parse invalid input");
-    }
-
-    @Test(expected = IllegalArgumentException.class)
     public void testParseLineMissingLines() throws Exception {
-        IssuePattern.parseLine("resourcePattern;rulePattern; ");
+        CoveragePattern.parseLine("resourcePattern; ");
         Assert.fail("must not parse invalid input");
     }
 
     @Test(expected = IllegalArgumentException.class)
     public void testParseLineMissingResourcePattern() throws Exception {
-        IssuePattern.parseLine(" ;rulePattern;[2-3]");
+        CoveragePattern.parseLine(" ;[2-3]");
         Assert.fail("must not parse invalid input");
     }
 
     @Test(expected = IllegalArgumentException.class)
     public void testParseLineMissingRulePattern() throws Exception {
-        IssuePattern.parseLine("resourcePattern; ;[2-3]");
+        CoveragePattern.parseLine("resourcePattern; ;[2-3]");
         Assert.fail("must not parse invalid input");
     }
 
     @Test
     public void testParseLineMixed() throws Exception {
-        final IssuePattern pattern = IssuePattern.parseLine("resourcePattern;rulePattern;[2,4-6]");
+        final CoveragePattern pattern = CoveragePattern.parseLine("resourcePattern;[2,4-6]");
         Assert.assertEquals("resourcePattern name must match", "resourcePattern", pattern.getResourcePattern());
-        Assert.assertEquals("rulePattern name must match", "rulePattern", pattern.getRulePattern());
 
         final SortedSet<Integer> full = pattern.getLines();
         Assert.assertNotNull("SortedSet must not be null", full);
@@ -165,9 +155,8 @@ public class IssuePatternTest {
 
     @Test
     public void testParseLineRange() throws Exception {
-        final IssuePattern pattern = IssuePattern.parseLine("resourcePattern;rulePattern;[2-6]");
+        final CoveragePattern pattern = CoveragePattern.parseLine("resourcePattern;[2-6]");
         Assert.assertEquals("resourcePattern name must match", "resourcePattern", pattern.getResourcePattern());
-        Assert.assertEquals("rulePattern name must match", "rulePattern", pattern.getRulePattern());
 
         final SortedSet<Integer> full = pattern.getLines();
         Assert.assertNotNull("SortedSet must not be null", full);
@@ -181,9 +170,8 @@ public class IssuePatternTest {
 
     @Test
     public void testParseLineRangeAllLines() throws Exception {
-        final IssuePattern pattern = IssuePattern.parseLine("resourcePattern;rulePattern;*");
+        final CoveragePattern pattern = CoveragePattern.parseLine("resourcePattern;*");
         Assert.assertEquals("resourcePattern name must match", "resourcePattern", pattern.getResourcePattern());
-        Assert.assertEquals("rulePattern name must match", "rulePattern", pattern.getRulePattern());
 
         final SortedSet<Integer> full = pattern.getLines();
         Assert.assertNotNull("SortedSet must not be null", full);
@@ -192,15 +180,14 @@ public class IssuePatternTest {
 
     @Test(expected = IllegalArgumentException.class)
     public void testParseLineRangeException() throws Exception {
-        IssuePattern.parseLineValues("resourcePattern;rulePattern;[6-2]");
+        CoveragePattern.parseLineValues("resourcePattern;[6-2]");
         Assert.fail("must not allow to switch from and to");
     }
 
     @Test
     public void testParseLineSingle() throws Exception {
-        final IssuePattern pattern = IssuePattern.parseLine("resourcePattern;rulePattern;[2]");
+        final CoveragePattern pattern = CoveragePattern.parseLine("resourcePattern;[2]");
         Assert.assertEquals("resourcePattern name must match", "resourcePattern", pattern.getResourcePattern());
-        Assert.assertEquals("rulePattern name must match", "rulePattern", pattern.getRulePattern());
 
         final SortedSet<Integer> full = pattern.getLines();
         Assert.assertNotNull("SortedSet must not be null", full);
@@ -208,3 +195,4 @@ public class IssuePatternTest {
         Assert.assertTrue("SortedSet must contain line 2", full.contains(2));
     }
 }
+

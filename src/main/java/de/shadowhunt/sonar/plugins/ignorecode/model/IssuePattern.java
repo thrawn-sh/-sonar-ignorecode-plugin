@@ -20,6 +20,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.SortedSet;
 
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringUtils;
@@ -58,7 +59,7 @@ public final class IssuePattern extends AbstractPattern {
      * the lines in the resource
      *
      * @param line each line must consist out of the resourcePattern, rulePattern and lineValues,
-     * separated by a ';' (for a description of lineValues see {@link #parseLineValues(String, String, String)}
+     * separated by a ';' (lines can be given as values ([1,3]) or as ranges ([5-10]) or a combination of both ([1,3,5-10]))
      *
      * @return the new {@link IssuePattern} from the given line
      */
@@ -83,28 +84,9 @@ public final class IssuePattern extends AbstractPattern {
             throw new IllegalArgumentException("The third field does not define a range of lines: " + line);
         }
 
-        return parseLineValues(resourcePattern, rulePattern, lineValues);
+        final SortedSet<Integer> lines = parseLineValues(lineValues);
+        return new IssuePattern(resourcePattern, rulePattern, lines);
     }
-
-    /**
-     * Create a new {@link IssuePattern} for the given resourcePattern and rulePattern by parsing the lineValues
-     *
-     * @param resourcePattern pattern describing the resources that will be matched
-     * @param rulePattern pattern describing the rules that will be matched
-     * @param lineValues pattern that describes the lines the {@link IssuePattern} shall match, lines can be
-     * given as values ([1,3]) or as ranges ([5-10]) or a combination of both ([1,3,5-10])
-     *
-     * @return the new {@link IssuePattern} for the given resource by parsing the lineValues
-     */
-    public static IssuePattern parseLineValues(final String resourcePattern, final String rulePattern, final String lineValues) {
-        final IssuePattern pattern = new IssuePattern(resourcePattern, rulePattern);
-        if (!"*".equals(lineValues)) {
-            parseLineValues(pattern, lineValues);
-        }
-        return pattern;
-    }
-
-    private final String resourcePattern;
 
     private final String rulePattern;
 
@@ -114,47 +96,30 @@ public final class IssuePattern extends AbstractPattern {
      * @param resourcePattern pattern that describes the resources this {@link IssuePattern} shall match
      * @param rulePattern pattern that describes the rules this {@link IssuePattern} shall match
      */
-    public IssuePattern(final String resourcePattern, final String rulePattern) {
-        this.resourcePattern = resourcePattern;
+    public IssuePattern(final String resourcePattern, final String rulePattern, SortedSet<Integer> lines) {
+        super(resourcePattern, lines);
         this.rulePattern = rulePattern;
     }
 
     @Override
-    public boolean equals(final Object obj) {
-        if (this == obj) {
+    public boolean equals(final Object o) {
+        if (this == o) {
             return true;
         }
-        if (!super.equals(obj)) {
+        if (!(o instanceof IssuePattern)) {
             return false;
         }
-        if (getClass() != obj.getClass()) {
+        if (!super.equals(o)) {
             return false;
         }
-        final IssuePattern other = (IssuePattern) obj;
-        if (resourcePattern == null) {
-            if (other.resourcePattern != null) {
-                return false;
-            }
-        } else if (!resourcePattern.equals(other.resourcePattern)) {
-            return false;
-        }
-        if (rulePattern == null) {
-            if (other.rulePattern != null) {
-                return false;
-            }
-        } else if (!rulePattern.equals(other.rulePattern)) {
-            return false;
-        }
-        return true;
-    }
 
-    /**
-     * Returns a pattern that describes the resources that shall match
-     *
-     * @return the pattern that describes the resources that shall match
-     */
-    public String getResourcePattern() {
-        return resourcePattern;
+        final IssuePattern that = (IssuePattern) o;
+
+        if (!rulePattern.equals(that.rulePattern)) {
+            return false;
+        }
+
+        return true;
     }
 
     /**
@@ -168,10 +133,8 @@ public final class IssuePattern extends AbstractPattern {
 
     @Override
     public int hashCode() {
-        final int prime = 31;
         int result = super.hashCode();
-        result = (prime * result) + ((resourcePattern == null) ? 0 : resourcePattern.hashCode());
-        result = (prime * result) + ((rulePattern == null) ? 0 : rulePattern.hashCode());
+        result = 31 * result + rulePattern.hashCode();
         return result;
     }
 
@@ -182,8 +145,8 @@ public final class IssuePattern extends AbstractPattern {
         builder.append(resourcePattern);
         builder.append(", rulePattern=");
         builder.append(rulePattern);
-        builder.append(", getLines()=");
-        builder.append(getLines());
+        builder.append(", lines=");
+        builder.append(lines);
         builder.append(']');
         return builder.toString();
     }
