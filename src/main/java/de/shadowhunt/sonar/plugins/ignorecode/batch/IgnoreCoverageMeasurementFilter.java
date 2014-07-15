@@ -67,9 +67,6 @@ public class IgnoreCoverageMeasurementFilter implements MeasurementFilter {
             return true;
         }
 
-        final String metricKey = measure.getMetricKey();
-        LOGGER.warn("{}: {}", resource.getKey(), metricKey);
-
         for (final CoveragePattern pattern : patterns) {
             final WildcardPattern wildcardPattern = WildcardPattern.create(pattern.getResourcePattern());
             if (!wildcardPattern.match(resource.getKey())) {
@@ -93,16 +90,19 @@ public class IgnoreCoverageMeasurementFilter implements MeasurementFilter {
 
     private void rewrite(final Measure measure, final Set<Integer> lines) {
         final String metricKey = measure.getMetricKey();
-        switch (metricKey) {
-            case CoreMetrics.CONDITIONS_BY_LINE_KEY:
-                modifyMeasures.filterLineValuePairs(measure, lines);
-                break;
-            case CoreMetrics.COVERED_CONDITIONS_BY_LINE_KEY:
-                modifyMeasures.filterLineValuePairs(measure, lines);
-                break;
-            case CoreMetrics.COVERAGE_LINE_HITS_DATA_KEY:
-                modifyMeasures.filterLineValuePairs(measure, lines);
-                break;
+        if (CoreMetrics.CONDITIONS_BY_LINE_KEY.equals(metricKey)) {
+            modifyMeasures.filterLineValuePairs(measure, lines);
+            return;
+        }
+
+        if (CoreMetrics.COVERED_CONDITIONS_BY_LINE_KEY.equals(metricKey)) {
+            modifyMeasures.filterLineValuePairs(measure, lines);
+            return;
+        }
+
+        if (CoreMetrics.COVERAGE_LINE_HITS_DATA_KEY.equals(metricKey)) {
+            modifyMeasures.filterLineValuePairs(measure, lines);
+            return;
         }
     }
 

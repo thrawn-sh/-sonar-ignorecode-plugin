@@ -69,6 +69,10 @@ class MeasuresStorage {
         final String metricKey = metric.getKey();
 
         final ListMultimap<String, Measure> measuresByMetric = getMeasuresByMetric(context);
+        if (measuresByMetric == null) {
+            return;
+        }
+
         final List<Measure> metricMeasures = measuresByMetric.get(metricKey);
         if (metricMeasures == null) {
             return;
@@ -80,6 +84,10 @@ class MeasuresStorage {
         final String metricKey = measure.getMetricKey();
 
         final ListMultimap<String, Measure> measuresByMetric = getMeasuresByMetric(context);
+        if (measuresByMetric == null) {
+            return;
+        }
+
         final List<Measure> metricMeasures = measuresByMetric.get(metricKey);
         if (metricMeasures == null) {
             return;
