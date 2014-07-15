@@ -50,7 +50,7 @@ public class IgnoreIssueFilter implements IssueFilter {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(IgnoreIssueFilter.class);
 
-    static final List<IssuePattern> loadPatterns(final Configuration configuration) {
+    static List<IssuePattern> loadPatterns(final Configuration configuration) {
         if (configuration == null) {
             return Collections.emptyList();
         }
@@ -114,7 +114,8 @@ public class IgnoreIssueFilter implements IssueFilter {
     private final List<IssuePattern> patterns;
 
     /**
-     * Create a new {@link IgnoreIssueFilter} that loads its patterns with {@link #CONFIG_FILE} key from the given {@link Configuration}
+     * Create a new {@link IgnoreIssueFilter} that loads its patterns with
+     * {@link #CONFIG_FILE} key from the given {@link Configuration}
      *
      * @param configuration project {@link org.apache.commons.configuration.Configuration}
      */

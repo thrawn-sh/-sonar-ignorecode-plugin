@@ -33,16 +33,26 @@ import org.sonar.core.measure.MeasurementFilter;
 import de.shadowhunt.sonar.plugins.ignorecode.internal.ModifyMeasures;
 import de.shadowhunt.sonar.plugins.ignorecode.model.CoveragePattern;
 
+/**
+ * Disables all {@link Measure}s on completely ignored files and
+ * changes {@link Measure}s with data-value before they are saved
+ */
 public class IgnoreCoverageMeasurementFilter implements MeasurementFilter {
 
     private static final Set<Metric> COVERAGE_METRICS = IgnoreCoverageDecorator.CONSUMED_METRICS;
 
     private static final Logger LOGGER = LoggerFactory.getLogger(IgnoreCoverageMeasurementFilter.class);
 
-    private ModifyMeasures modifyMeasures = new ModifyMeasures();
+    private final ModifyMeasures modifyMeasures = new ModifyMeasures();
 
     private final List<CoveragePattern> patterns;
 
+    /**
+     * Create a new {@link IgnoreCoverageMeasurementFilter} that loads its patterns with
+     * {@link IgnoreCoverageDecorator#CONFIG_FILE} key from the given {@link Configuration}
+     *
+     * @param configuration project {@link org.apache.commons.configuration.Configuration}
+     */
     public IgnoreCoverageMeasurementFilter(final Configuration configuration) {
         patterns = IgnoreCoverageDecorator.loadPatterns(configuration);
     }

@@ -43,7 +43,7 @@ public class ModifyMeasuresTest {
 
     private Map<String, Map<Integer, Integer>> conditionData = new HashMap<>(2);
 
-    private ModifyMeasures modifyMeasures = new ModifyMeasures();
+    private final ModifyMeasures modifyMeasures = new ModifyMeasures();
 
     @Before
     public void setUp() throws Exception {
@@ -114,7 +114,7 @@ public class ModifyMeasuresTest {
 
         final long result = modifyMeasures.rewriteConditionsCountTotal(context, conditionData);
         Assert.assertEquals("CONDITIONS_TO_COVER", 6L, result);
-        Assert.assertEquals("CONDITIONS_TO_COVER", 6.0, measure.getValue().doubleValue(), DELTA);
+        Assert.assertEquals("CONDITIONS_TO_COVER", 6.0, measure.getValue(), DELTA);
     }
 
     @Test
@@ -125,7 +125,7 @@ public class ModifyMeasuresTest {
 
         final long result = modifyMeasures.rewriteConditionsCountUncovered(context, conditionData);
         Assert.assertEquals("CONDITIONS_TO_COVER", 3L, result);
-        Assert.assertEquals("CONDITIONS_TO_COVER", 3.0, measure.getValue().doubleValue(), DELTA);
+        Assert.assertEquals("CONDITIONS_TO_COVER", 3.0, measure.getValue(), DELTA);
     }
 
     @Test
@@ -136,11 +136,11 @@ public class ModifyMeasuresTest {
 
         final double result = modifyMeasures.rewriteConditionsCoveragePercentage(context, 200L, 30L);
         Assert.assertEquals("LINE_COVERAGE", 85.0, result, DELTA);
-        Assert.assertEquals("LINE_COVERAGE", 85.0, measure.getValue().doubleValue(), DELTA);
+        Assert.assertEquals("LINE_COVERAGE", 85.0, measure.getValue(), DELTA);
 
         final double zero = modifyMeasures.rewriteConditionsCoveragePercentage(context, 0L, 30L);
         Assert.assertEquals("LINE_COVERAGE", 0.0, zero, DELTA);
-        Assert.assertEquals("LINE_COVERAGE", 0.0, measure.getValue().doubleValue(), DELTA);
+        Assert.assertEquals("LINE_COVERAGE", 0.0, measure.getValue(), DELTA);
     }
 
     @Test
@@ -152,7 +152,7 @@ public class ModifyMeasuresTest {
         final Map<Integer, Integer> lineData = parse("1=2;2=2;3=0;4=2");
         final long result = modifyMeasures.rewriteLinesCountTotal(context, lineData);
         Assert.assertEquals("LINE_COVERAGE", 4L, result);
-        Assert.assertEquals("LINE_COVERAGE", 4.0, measure.getValue().doubleValue(), DELTA);
+        Assert.assertEquals("LINE_COVERAGE", 4.0, measure.getValue(), DELTA);
     }
 
     @Test
@@ -164,7 +164,7 @@ public class ModifyMeasuresTest {
         final Map<Integer, Integer> lineData = parse("1=1;2=1;3=0;4=1");
         final long result = modifyMeasures.rewriteLinesCountUncovered(context, lineData);
         Assert.assertEquals("UNCOVERED_LINES", 1L, result);
-        Assert.assertEquals("UNCOVERED_LINES", 1.0, measure.getValue().doubleValue(), DELTA);
+        Assert.assertEquals("UNCOVERED_LINES", 1.0, measure.getValue(), DELTA);
     }
 
     @Test
@@ -175,11 +175,11 @@ public class ModifyMeasuresTest {
 
         final double result = modifyMeasures.rewriteLinesCoveragePercentage(context, 200L, 30L);
         Assert.assertEquals("LINE_COVERAGE", 85.0, result, DELTA);
-        Assert.assertEquals("LINE_COVERAGE", 85.0, measure.getValue().doubleValue(), DELTA);
+        Assert.assertEquals("LINE_COVERAGE", 85.0, measure.getValue(), DELTA);
 
         final double zero = modifyMeasures.rewriteLinesCoveragePercentage(context, 0L, 30L);
         Assert.assertEquals("LINE_COVERAGE", 0.0, zero, DELTA);
-        Assert.assertEquals("LINE_COVERAGE", 0.0, measure.getValue().doubleValue(), DELTA);
+        Assert.assertEquals("LINE_COVERAGE", 0.0, measure.getValue(), DELTA);
     }
 
     @Test
@@ -190,15 +190,15 @@ public class ModifyMeasuresTest {
 
         final double result = modifyMeasures.rewriteOverallCoverage(context, 200L, 30L, 50L, 20L);
         Assert.assertEquals("COVERAGE", 80.0, result, DELTA);
-        Assert.assertEquals("COVERAGE", 80.0, measure.getValue().doubleValue(), DELTA);
+        Assert.assertEquals("COVERAGE", 80.0, measure.getValue(), DELTA);
 
         final double zeroBranch = modifyMeasures.rewriteOverallCoverage(context, 200L, 30L, 0L, 0L);
         Assert.assertEquals("COVERAGE", 85.0, zeroBranch, DELTA);
-        Assert.assertEquals("COVERAGE", 85.0, measure.getValue().doubleValue(), DELTA);
+        Assert.assertEquals("COVERAGE", 85.0, measure.getValue(), DELTA);
 
         final double noCoverage = modifyMeasures.rewriteOverallCoverage(context, 0L, 0L, 0L, 0L);
         Assert.assertEquals("COVERAGE", 0.0, noCoverage, DELTA);
-        Assert.assertEquals("COVERAGE", 0.0, measure.getValue().doubleValue(), DELTA);
+        Assert.assertEquals("COVERAGE", 0.0, measure.getValue(), DELTA);
     }
 
     private Set<Integer> toSet(final int... values) {

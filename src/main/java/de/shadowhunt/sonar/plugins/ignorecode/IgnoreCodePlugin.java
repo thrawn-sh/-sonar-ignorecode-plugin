@@ -22,6 +22,7 @@ import com.google.common.collect.ImmutableList;
 import org.sonar.api.SonarPlugin;
 
 import de.shadowhunt.sonar.plugins.ignorecode.batch.IgnoreCoverageDecorator;
+import de.shadowhunt.sonar.plugins.ignorecode.batch.IgnoreCoverageMeasurementFilter;
 import de.shadowhunt.sonar.plugins.ignorecode.batch.IgnoreIssueFilter;
 
 /**
@@ -33,7 +34,7 @@ public class IgnoreCodePlugin extends SonarPlugin {
     public List getExtensions() {
         return ImmutableList.of( //
                 IgnoreCoverageDecorator.class, //
-                // IgnoreCoverageMeasurementFilter.class, //
+                IgnoreCoverageMeasurementFilter.class, //
                 IgnoreIssueFilter.class //
         );
     }

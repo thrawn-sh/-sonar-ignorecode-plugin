@@ -34,19 +34,23 @@ import org.sonar.batch.index.Bucket;
 public class MeasuresStorage {
 
     @CheckForNull
-    static ListMultimap<String, Measure> getMeasuresByMetric(final DecoratorContext context) throws Exception {
-        final SonarIndex index = getPrivateField(context, "index");
-        if (index == null) {
-            return null;
-        }
+    static ListMultimap<String, Measure> getMeasuresByMetric(final DecoratorContext context) {
+        try {
+            final SonarIndex index = getPrivateField(context, "index");
+            if (index == null) {
+                return null;
+            }
 
-        final Map<Resource, Bucket> buckets = getPrivateField(index, "buckets");
-        if (buckets == null) {
-            return null;
-        }
+            final Map<Resource, Bucket> buckets = getPrivateField(index, "buckets");
+            if (buckets == null) {
+                return null;
+            }
 
-        final Bucket bucket = buckets.get(context.getResource());
-        return getPrivateField(bucket, "measuresByMetric");
+            final Bucket bucket = buckets.get(context.getResource());
+            return getPrivateField(bucket, "measuresByMetric");
+        } catch (final Exception e) {
+            throw new SonarException("could not replace measure", e);
+        }
     }
 
     @SuppressWarnings("unchecked")
@@ -59,14 +63,6 @@ public class MeasuresStorage {
     }
 
     public void clear(final DecoratorContext context, final Metric metric) {
-        try {
-            clear0(context, metric);
-        } catch (final Exception e) {
-            throw new SonarException("could not replace measure", e);
-        }
-    }
-
-    void clear0(DecoratorContext context, Metric metric) throws Exception {
         final String metricKey = metric.getKey();
 
         final ListMultimap<String, Measure> measuresByMetric = getMeasuresByMetric(context);
@@ -78,14 +74,6 @@ public class MeasuresStorage {
     }
 
     public void replace(final DecoratorContext context, final Measure measure) {
-        try {
-            replace0(context, measure);
-        } catch (final Exception e) {
-            throw new SonarException("could not replace measure", e);
-        }
-    }
-
-    void replace0(DecoratorContext context, Measure measure) throws Exception {
         final String metricKey = measure.getMetricKey();
 
         final ListMultimap<String, Measure> measuresByMetric = getMeasuresByMetric(context);

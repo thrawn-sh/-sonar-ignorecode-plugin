@@ -84,7 +84,7 @@ public class IgnoreCoverageDecorator implements Decorator {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(IgnoreCoverageDecorator.class);
 
-    static final List<CoveragePattern> loadPatterns(final Configuration configuration) {
+    static List<CoveragePattern> loadPatterns(final Configuration configuration) {
         if (configuration == null) {
             return Collections.emptyList();
         }
@@ -114,11 +114,11 @@ public class IgnoreCoverageDecorator implements Decorator {
         }
     }
 
-    private ModifyMeasures modifyMeasures = new ModifyMeasures();
+    private final ModifyMeasures modifyMeasures = new ModifyMeasures();
 
     private final List<CoveragePattern> patterns;
 
-    private MeasuresStorage storage = new MeasuresStorage();
+    private final MeasuresStorage storage = new MeasuresStorage();
 
     /**
      * Create a new {@link IgnoreCoverageDecorator} that removes all coverage metrics for ignored code
