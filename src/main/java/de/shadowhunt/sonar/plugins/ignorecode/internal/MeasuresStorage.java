@@ -37,19 +37,8 @@ class MeasuresStorage {
     static ListMultimap<String, Measure> getMeasuresByMetric(final DecoratorContext context) {
         try {
             final SonarIndex index = getPrivateField(context, "index");
-            if (index == null) {
-                return null;
-            }
-
             final Map<Resource, Bucket> buckets = getPrivateField(index, "buckets");
-            if (buckets == null) {
-                return null;
-            }
-
             final Bucket bucket = buckets.get(context.getResource());
-            if (bucket == null) {
-                return null;
-            }
             return getPrivateField(bucket, "measuresByMetric");
         } catch (final Exception e) {
             throw new SonarException("could not replace measure", e);
@@ -57,7 +46,6 @@ class MeasuresStorage {
     }
 
     @SuppressWarnings("unchecked")
-    @CheckForNull
     static <E> E getPrivateField(final Object object, final String fieldName) throws Exception {
         final Class<?> contextClass = object.getClass();
         final Field field = contextClass.getDeclaredField(fieldName);
@@ -69,10 +57,6 @@ class MeasuresStorage {
         final String metricKey = metric.getKey();
 
         final ListMultimap<String, Measure> measuresByMetric = getMeasuresByMetric(context);
-        if (measuresByMetric == null) {
-            return;
-        }
-
         final List<Measure> metricMeasures = measuresByMetric.get(metricKey);
         if (metricMeasures == null) {
             return;
@@ -84,10 +68,6 @@ class MeasuresStorage {
         final String metricKey = measure.getMetricKey();
 
         final ListMultimap<String, Measure> measuresByMetric = getMeasuresByMetric(context);
-        if (measuresByMetric == null) {
-            return;
-        }
-
         final List<Measure> metricMeasures = measuresByMetric.get(metricKey);
         if (metricMeasures == null) {
             return;

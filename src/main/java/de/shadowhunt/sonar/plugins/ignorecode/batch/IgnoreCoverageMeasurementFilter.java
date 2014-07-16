@@ -88,7 +88,7 @@ public class IgnoreCoverageMeasurementFilter implements MeasurementFilter {
         return modifyMeasures;
     }
 
-    private void rewrite(final Measure measure, final Set<Integer> lines) {
+    void rewrite(final Measure measure, final Set<Integer> lines) {
         final String metricKey = measure.getMetricKey();
         if (CoreMetrics.CONDITIONS_BY_LINE_KEY.equals(metricKey)) {
             modifyMeasures.filterLineValuePairs(measure, lines);
