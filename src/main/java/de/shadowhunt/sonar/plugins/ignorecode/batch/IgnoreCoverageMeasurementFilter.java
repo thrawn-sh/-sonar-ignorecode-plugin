@@ -67,18 +67,22 @@ public class IgnoreCoverageMeasurementFilter implements MeasurementFilter {
             return true;
         }
 
+        final String resourceKey = resource.getKey();
+        final String metricKey = measure.getMetricKey();
         for (final CoveragePattern pattern : patterns) {
             final WildcardPattern wildcardPattern = WildcardPattern.create(pattern.getResourcePattern());
-            if (!wildcardPattern.match(resource.getKey())) {
+            if (!wildcardPattern.match(resourceKey)) {
                 continue;
             }
 
             final Set<Integer> lines = pattern.getLines();
             if (lines.isEmpty()) {
                 // empty is any line => remove all measures
+                LOGGER.info("measure of metric {} on resource {} filtered by {}", metricKey, resourceKey, pattern);
                 return false;
             }
 
+            LOGGER.info("measure of metric {} on resource {} modified by {}", metricKey, resourceKey, pattern);
             rewrite(measure, lines);
         }
         return true;

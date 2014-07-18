@@ -115,12 +115,6 @@ public class IgnoreCoverageDecorator implements Decorator {
         patterns = loadPatterns(configuration);
     }
 
-    private void clearAllMeasures(final DecoratorContext context) {
-        for (final Metric metric : CONSUMED_METRICS) {
-            modifyMeasures.clear(context, metric);
-        }
-    }
-
     @DependsUpon
     public Set<Metric> consumedMetrics() {
         return CONSUMED_METRICS;
@@ -132,18 +126,16 @@ public class IgnoreCoverageDecorator implements Decorator {
             return;
         }
 
-        LOGGER.warn(resource.getKey());
-
+        final String resourceKey = resource.getKey();
         for (final CoveragePattern pattern : patterns) {
             final WildcardPattern wildcardPattern = WildcardPattern.create(pattern.getResourcePattern());
-            if (!wildcardPattern.match(resource.getKey())) {
+            if (!wildcardPattern.match(resourceKey)) {
                 continue;
             }
 
             final Set<Integer> lines = pattern.getLines();
             if (lines.isEmpty()) {
-                // empty is any line => remove all measures
-                clearAllMeasures(context);
+                // empty is any line => already cleared by IgnoreCoverageMeasurementFilter
                 break;
             }
 

@@ -20,8 +20,6 @@ import java.lang.reflect.Field;
 import java.util.List;
 import java.util.Map;
 
-import javax.annotation.CheckForNull;
-
 import com.google.common.collect.ListMultimap;
 import org.sonar.api.batch.DecoratorContext;
 import org.sonar.api.batch.SonarIndex;
@@ -33,7 +31,6 @@ import org.sonar.batch.index.Bucket;
 
 class MeasuresStorage {
 
-    @CheckForNull
     static ListMultimap<String, Measure> getMeasuresByMetric(final DecoratorContext context) {
         try {
             final SonarIndex index = getPrivateField(context, "index");
