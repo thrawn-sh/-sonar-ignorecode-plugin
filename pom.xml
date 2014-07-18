@@ -299,7 +299,6 @@
                     <usedDependencies>
                         <!-- don't log to stdout during test -->
                         <usedDependency>org.slf4j:slf4j-nop</usedDependency>
-                        <usedDependency>org.mybatis:mybatis</usedDependency>
                     </usedDependencies>
                 </configuration>
                 <executions>
@@ -613,12 +612,6 @@
             <groupId>org.mockito</groupId>
             <artifactId>mockito-core</artifactId>
             <version>1.9.5</version>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.mybatis</groupId>
-            <artifactId>mybatis</artifactId>
-            <version>3.2.2</version><!-- as declared in sonar-plugin-api -->
             <scope>test</scope>
         </dependency>
         <dependency>
