@@ -123,6 +123,21 @@ public class IgnoreCoverageMeasurementFilter implements MeasurementFilter {
             modifyMeasures.filterLineValuePairs(measure, lines);
             return;
         }
+
+        if (CoreMetrics.OVERALL_CONDITIONS_BY_LINE_KEY.equals(metricKey)) {
+            modifyMeasures.filterLineValuePairs(measure, lines);
+            return;
+        }
+
+        if (CoreMetrics.OVERALL_COVERED_CONDITIONS_BY_LINE_KEY.equals(metricKey)) {
+            modifyMeasures.filterLineValuePairs(measure, lines);
+            return;
+        }
+
+        if (CoreMetrics.OVERALL_COVERAGE_LINE_HITS_DATA_KEY.equals(metricKey)) {
+            modifyMeasures.filterLineValuePairs(measure, lines);
+            return;
+        }
     }
 
     void setModifyMeasures(final ModifyMeasures modifyMeasures) {

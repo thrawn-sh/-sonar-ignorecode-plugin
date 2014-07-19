@@ -100,7 +100,7 @@ public class ModifyMeasures {
         removeIgnores(conditionsByLine, lines);
 
         final String filteredData = KeyValueFormat.format(conditionsByLine, CONVERTER, CONVERTER);
-        LOGGER.info("updating {} ({} to {})", measure.getMetricKey(), originalData, filteredData);
+        LOGGER.debug("updating {} ({} to {})", measure.getMetricKey(), originalData, filteredData);
         measure.setData(filteredData);
         return conditionsByLine;
     }
@@ -128,6 +128,34 @@ public class ModifyMeasures {
 
         rewriteUnitTestCoverage(context, lines);
         rewriteIntegrationTestCoverage(context, lines);
+        rewriteOverallTestCoverage(context, lines);
+    }
+
+    private void rewriteOverallTestCoverage(final DecoratorContext context, final Set<Integer> lines) {
+        final Map<Integer, Integer> linesData = filterLinesData(context, CoreMetrics.OVERALL_COVERAGE_LINE_HITS_DATA, lines);
+        if (linesData == null) {
+            LOGGER.debug("no overall test coverage data available");
+            return;
+        }
+
+        final long linesCountTotal = rewriteLinesCountTotal(context, CoreMetrics.OVERALL_LINES_TO_COVER, linesData);
+        final long linesCountUncovered = rewriteLinesCountUncovered(context, CoreMetrics.OVERALL_UNCOVERED_LINES, linesData);
+        rewriteLinesCoveragePercentage(context, CoreMetrics.OVERALL_LINE_COVERAGE, linesCountTotal, linesCountUncovered);
+
+        final Map<String, Map<Integer, Integer>> conditionsData = filterConditionsData(context, CoreMetrics.OVERALL_CONDITIONS_BY_LINE, lines);
+        final long conditionsCountTotal;
+        final long conditionsCountUncovered;
+        if (conditionsData == null) {
+            LOGGER.debug("no overall test coverage data available");
+            conditionsCountTotal = 0L;
+            conditionsCountUncovered = 0L;
+        } else {
+            conditionsCountTotal = rewriteConditionsCountTotal(context, CoreMetrics.OVERALL_CONDITIONS_TO_COVER, conditionsData);
+            conditionsCountUncovered = rewriteConditionsCountUncovered(context, CoreMetrics.OVERALL_UNCOVERED_CONDITIONS, conditionsData);
+            rewriteConditionsCoveragePercentage(context, CoreMetrics.OVERALL_BRANCH_COVERAGE, conditionsCountTotal, conditionsCountUncovered);
+        }
+
+        rewriteOverallCoverage(context, CoreMetrics.OVERALL_COVERAGE, linesCountTotal, linesCountUncovered, conditionsCountTotal, conditionsCountUncovered);
     }
 
     long rewriteConditionsCountTotal(final DecoratorContext context, final Metric metric, final Map<String, Map<Integer, Integer>> conditionData) {

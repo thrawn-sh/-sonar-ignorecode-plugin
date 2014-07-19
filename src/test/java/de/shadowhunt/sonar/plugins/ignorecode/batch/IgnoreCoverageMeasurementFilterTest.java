@@ -124,5 +124,10 @@ public class IgnoreCoverageMeasurementFilterTest {
         filter.rewrite(new Measure(CoreMetrics.IT_CONDITIONS_BY_LINE, 42.0), lines);
         filter.rewrite(new Measure(CoreMetrics.IT_COVERED_CONDITIONS_BY_LINE, 42.0), lines);
         filter.rewrite(new Measure(CoreMetrics.IT_COVERAGE_LINE_HITS_DATA, 42.0), lines);
+        // overall test
+        filter.rewrite(new Measure(CoreMetrics.OVERALL_COVERAGE, 42.0), lines);
+        filter.rewrite(new Measure(CoreMetrics.OVERALL_CONDITIONS_BY_LINE, 42.0), lines);
+        filter.rewrite(new Measure(CoreMetrics.OVERALL_COVERED_CONDITIONS_BY_LINE, 42.0), lines);
+        filter.rewrite(new Measure(CoreMetrics.OVERALL_COVERAGE_LINE_HITS_DATA, 42.0), lines);
     }
 }

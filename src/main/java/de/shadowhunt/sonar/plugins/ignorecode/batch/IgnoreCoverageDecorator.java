@@ -78,6 +78,16 @@ public class IgnoreCoverageDecorator implements Decorator {
         consumedMetrics.add(CoreMetrics.IT_LINE_COVERAGE);
         consumedMetrics.add(CoreMetrics.IT_UNCOVERED_CONDITIONS);
         consumedMetrics.add(CoreMetrics.IT_UNCOVERED_LINES);
+        // overall test coverage
+        consumedMetrics.add(CoreMetrics.OVERALL_CONDITIONS_BY_LINE);
+        consumedMetrics.add(CoreMetrics.OVERALL_CONDITIONS_TO_COVER);
+        consumedMetrics.add(CoreMetrics.OVERALL_COVERAGE);
+        consumedMetrics.add(CoreMetrics.OVERALL_COVERAGE_LINE_HITS_DATA);
+        consumedMetrics.add(CoreMetrics.OVERALL_COVERED_CONDITIONS_BY_LINE);
+        consumedMetrics.add(CoreMetrics.OVERALL_LINES_TO_COVER);
+        consumedMetrics.add(CoreMetrics.OVERALL_LINE_COVERAGE);
+        consumedMetrics.add(CoreMetrics.OVERALL_UNCOVERED_CONDITIONS);
+        consumedMetrics.add(CoreMetrics.OVERALL_UNCOVERED_LINES);
         CONSUMED_METRICS = Collections.unmodifiableSet(consumedMetrics);
     }
 
