@@ -71,10 +71,10 @@ public class ModifyMeasures {
     }
 
     @CheckForNull
-    Map<String, Map<Integer, Integer>> filterConditionsData(final DecoratorContext context, final Set<Integer> lines) {
-        final Measure conditions = context.getMeasure(CoreMetrics.CONDITIONS_BY_LINE);
+    Map<String, Map<Integer, Integer>> filterConditionsData(final DecoratorContext context, final Metric metric, final Set<Integer> lines) {
+        final Measure conditions = context.getMeasure(metric);
         if (conditions == null) {
-            LOGGER.debug("no condition coverage data");
+            LOGGER.debug("no condition coverage data for {}", metric.getKey());
             return null;
         }
 
@@ -106,10 +106,10 @@ public class ModifyMeasures {
     }
 
     @CheckForNull
-    Map<Integer, Integer> filterLinesData(final DecoratorContext context, final Set<Integer> lines) {
-        final Measure measure = context.getMeasure(CoreMetrics.COVERAGE_LINE_HITS_DATA);
+    Map<Integer, Integer> filterLinesData(final DecoratorContext context, final Metric metric, final Set<Integer> lines) {
+        final Measure measure = context.getMeasure(metric);
         if (measure == null) {
-            LOGGER.debug("no coverage data");
+            LOGGER.debug("no coverage data for {}", metric.getKey());
             return null;
         }
 
@@ -126,57 +126,35 @@ public class ModifyMeasures {
     public void rewrite(final DecoratorContext context, final Set<Integer> lines) {
         LOGGER.debug("processing {}", context.getResource().getKey());
 
-        final Map<Integer, Integer> linesData = filterLinesData(context, lines);
-        if (linesData == null) {
-            LOGGER.debug("no coverage data available");
-            return;
-        }
-
-        final long linesCountTotal = rewriteLinesCountTotal(context, linesData);
-        final long linesCountUncovered = rewriteLinesCountUncovered(context, linesData);
-        rewriteLinesCoveragePercentage(context, linesCountTotal, linesCountUncovered);
-
-        final Map<String, Map<Integer, Integer>> conditionsData = filterConditionsData(context, lines);
-        final long conditionsCountTotal;
-        final long conditionsCountUncovered;
-        if (conditionsData == null) {
-            LOGGER.debug("no coverage data available");
-            conditionsCountTotal = 0L;
-            conditionsCountUncovered = 0L;
-        } else {
-            conditionsCountTotal = rewriteConditionsCountTotal(context, conditionsData);
-            conditionsCountUncovered = rewriteConditionsCountUncovered(context, conditionsData);
-            rewriteConditionsCoveragePercentage(context, conditionsCountTotal, conditionsCountUncovered);
-        }
-
-        rewriteOverallCoverage(context, linesCountTotal, linesCountUncovered, conditionsCountTotal, conditionsCountUncovered);
+        rewriteUnitTestCoverage(context, lines);
+        rewriteIntegrationTestCoverage(context, lines);
     }
 
-    long rewriteConditionsCountTotal(final DecoratorContext context, final Map<String, Map<Integer, Integer>> conditionData) {
-        final Measure measure = context.getMeasure(CoreMetrics.CONDITIONS_TO_COVER);
+    long rewriteConditionsCountTotal(final DecoratorContext context, final Metric metric, final Map<String, Map<Integer, Integer>> conditionData) {
+        final Measure measure = context.getMeasure(metric);
         final double newValue = sumValues(conditionData.get(TOTAL_CONDITIONS));
-        LOGGER.debug("updating CONDITIONS_TO_COVER ({} to {})", measure.getValue(), newValue);
+        LOGGER.debug("updating {} ({} to {})", metric.getKey(), measure.getValue(), newValue);
         measure.setValue(newValue);
 
         measuresStorage.replace(context, measure);
         return (long) newValue;
     }
 
-    long rewriteConditionsCountUncovered(final DecoratorContext context, final Map<String, Map<Integer, Integer>> conditionData) {
-        final Measure measure = context.getMeasure(CoreMetrics.UNCOVERED_CONDITIONS);
+    long rewriteConditionsCountUncovered(final DecoratorContext context, final Metric metric, final Map<String, Map<Integer, Integer>> conditionData) {
+        final Measure measure = context.getMeasure(metric);
 
         final double conditionsCount = sumValues(conditionData.get(TOTAL_CONDITIONS));
         final double coveredConditionsCount = sumValues(conditionData.get(COVERED_CONDITIONS));
         final double newValue = Math.max((conditionsCount - coveredConditionsCount), 0.0);
-        LOGGER.debug("updating UNCOVERED_CONDITIONS ({} to {})", measure.getValue(), newValue);
+        LOGGER.debug("updating {} ({} to {})", metric.getKey(), measure.getValue(), newValue);
         measure.setValue(newValue);
 
         measuresStorage.replace(context, measure);
         return (long) newValue;
     }
 
-    double rewriteConditionsCoveragePercentage(final DecoratorContext context, final long total, final long uncovered) {
-        final Measure measure = context.getMeasure(CoreMetrics.BRANCH_COVERAGE);
+    double rewriteConditionsCoveragePercentage(final DecoratorContext context, final Metric metric, final long total, final long uncovered) {
+        final Measure measure = context.getMeasure(metric);
         final double newValue;
         if (total == 0L) {
             newValue = 0.0;
@@ -185,35 +163,62 @@ public class ModifyMeasures {
             newValue = covered * 100.0 / total;
         }
 
-        LOGGER.debug("updating LINE_COVERAGE ({} to {})", measure.getValue(), newValue);
+        LOGGER.debug("updating {} ({} to {})", metric.getKey(), measure.getValue(), newValue);
         measure.setValue(newValue);
 
         measuresStorage.replace(context, measure);
         return newValue;
     }
 
-    long rewriteLinesCountTotal(final DecoratorContext context, final Map<Integer, Integer> lineData) {
-        final Measure measure = context.getMeasure(CoreMetrics.LINES_TO_COVER);
+    void rewriteIntegrationTestCoverage(final DecoratorContext context, final Set<Integer> lines) {
+        final Map<Integer, Integer> linesData = filterLinesData(context, CoreMetrics.IT_COVERAGE_LINE_HITS_DATA, lines);
+        if (linesData == null) {
+            LOGGER.debug("no integration test coverage data available");
+            return;
+        }
+
+        final long linesCountTotal = rewriteLinesCountTotal(context, CoreMetrics.IT_LINES_TO_COVER, linesData);
+        final long linesCountUncovered = rewriteLinesCountUncovered(context, CoreMetrics.IT_UNCOVERED_LINES, linesData);
+        rewriteLinesCoveragePercentage(context, CoreMetrics.IT_LINE_COVERAGE, linesCountTotal, linesCountUncovered);
+
+        final Map<String, Map<Integer, Integer>> conditionsData = filterConditionsData(context, CoreMetrics.IT_CONDITIONS_BY_LINE, lines);
+        final long conditionsCountTotal;
+        final long conditionsCountUncovered;
+        if (conditionsData == null) {
+            LOGGER.debug("no integration test coverage data available");
+            conditionsCountTotal = 0L;
+            conditionsCountUncovered = 0L;
+        } else {
+            conditionsCountTotal = rewriteConditionsCountTotal(context, CoreMetrics.IT_CONDITIONS_TO_COVER, conditionsData);
+            conditionsCountUncovered = rewriteConditionsCountUncovered(context, CoreMetrics.IT_UNCOVERED_CONDITIONS, conditionsData);
+            rewriteConditionsCoveragePercentage(context, CoreMetrics.IT_BRANCH_COVERAGE, conditionsCountTotal, conditionsCountUncovered);
+        }
+
+        rewriteOverallCoverage(context, CoreMetrics.IT_COVERAGE, linesCountTotal, linesCountUncovered, conditionsCountTotal, conditionsCountUncovered);
+    }
+
+    long rewriteLinesCountTotal(final DecoratorContext context, final Metric metric, final Map<Integer, Integer> lineData) {
+        final Measure measure = context.getMeasure(metric);
         final double newValue = lineData.size();
-        LOGGER.debug("updating LINES_TO_COVER ({} to {})", measure.getValue(), newValue);
+        LOGGER.debug("updating {} ({} to {})", metric.getKey(), measure.getValue(), newValue);
         measure.setValue(newValue);
 
         measuresStorage.replace(context, measure);
         return (long) newValue;
     }
 
-    long rewriteLinesCountUncovered(final DecoratorContext context, final Map<Integer, Integer> lineData) {
-        final Measure measure = context.getMeasure(CoreMetrics.UNCOVERED_LINES);
+    long rewriteLinesCountUncovered(final DecoratorContext context, final Metric metric, final Map<Integer, Integer> lineData) {
+        final Measure measure = context.getMeasure(metric);
         final double newValue = countWithValue(lineData, 0.0);
-        LOGGER.debug("updating UNCOVERED_LINES ({} to {})", measure.getValue(), newValue);
+        LOGGER.debug("updating {} ({} to {})", metric.getKey(), measure.getValue(), newValue);
         measure.setValue(newValue);
 
         measuresStorage.replace(context, measure);
         return (long) newValue;
     }
 
-    double rewriteLinesCoveragePercentage(final DecoratorContext context, final long total, final long uncovered) {
-        final Measure measure = context.getMeasure(CoreMetrics.LINE_COVERAGE);
+    double rewriteLinesCoveragePercentage(final DecoratorContext context, final Metric metric, final long total, final long uncovered) {
+        final Measure measure = context.getMeasure(metric);
         final double newValue;
         if (total == 0L) {
             newValue = 0.0;
@@ -222,15 +227,15 @@ public class ModifyMeasures {
             newValue = covered * 100.0 / total;
         }
 
-        LOGGER.debug("updating LINE_COVERAGE ({} to {})", measure.getValue(), newValue);
+        LOGGER.debug("updating {} ({} to {})", metric.getKey(), measure.getValue(), newValue);
         measure.setValue(newValue);
 
         measuresStorage.replace(context, measure);
         return newValue;
     }
 
-    double rewriteOverallCoverage(final DecoratorContext context, final long lines, final long linesUncovered, final long conditions, final long conditionsUncovered) {
-        final Measure measure = context.getMeasure(CoreMetrics.COVERAGE);
+    double rewriteOverallCoverage(final DecoratorContext context, final Metric metric, final long lines, final long linesUncovered, final long conditions, final long conditionsUncovered) {
+        final Measure measure = context.getMeasure(metric);
 
         final double newValue;
         final long total = lines + conditions;
@@ -242,11 +247,38 @@ public class ModifyMeasures {
             newValue = ((coveredLines + coveredConditions) * 100.0) / (lines + conditions);
         }
 
-        LOGGER.debug("updating COVERAGE ({} to {})", measure.getValue(), newValue);
+        LOGGER.debug("updating {} ({} to {})", metric.getKey(), measure.getValue(), newValue);
         measure.setValue(newValue);
 
         measuresStorage.replace(context, measure);
         return newValue;
+    }
+
+    void rewriteUnitTestCoverage(final DecoratorContext context, final Set<Integer> lines) {
+        final Map<Integer, Integer> linesData = filterLinesData(context, CoreMetrics.COVERAGE_LINE_HITS_DATA, lines);
+        if (linesData == null) {
+            LOGGER.debug("no unit test coverage data available");
+            return;
+        }
+
+        final long linesCountTotal = rewriteLinesCountTotal(context, CoreMetrics.LINES_TO_COVER, linesData);
+        final long linesCountUncovered = rewriteLinesCountUncovered(context, CoreMetrics.UNCOVERED_LINES, linesData);
+        rewriteLinesCoveragePercentage(context, CoreMetrics.LINE_COVERAGE, linesCountTotal, linesCountUncovered);
+
+        final Map<String, Map<Integer, Integer>> conditionsData = filterConditionsData(context, CoreMetrics.CONDITIONS_BY_LINE, lines);
+        final long conditionsCountTotal;
+        final long conditionsCountUncovered;
+        if (conditionsData == null) {
+            LOGGER.debug("no unit test coverage data available");
+            conditionsCountTotal = 0L;
+            conditionsCountUncovered = 0L;
+        } else {
+            conditionsCountTotal = rewriteConditionsCountTotal(context, CoreMetrics.CONDITIONS_TO_COVER, conditionsData);
+            conditionsCountUncovered = rewriteConditionsCountUncovered(context, CoreMetrics.UNCOVERED_CONDITIONS, conditionsData);
+            rewriteConditionsCoveragePercentage(context, CoreMetrics.BRANCH_COVERAGE, conditionsCountTotal, conditionsCountUncovered);
+        }
+
+        rewriteOverallCoverage(context, CoreMetrics.COVERAGE, linesCountTotal, linesCountUncovered, conditionsCountTotal, conditionsCountUncovered);
     }
 
     void setMeasuresStorage(final MeasuresStorage measuresStorage) {

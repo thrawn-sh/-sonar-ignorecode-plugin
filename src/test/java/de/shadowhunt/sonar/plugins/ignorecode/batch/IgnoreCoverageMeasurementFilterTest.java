@@ -55,22 +55,6 @@ public class IgnoreCoverageMeasurementFilterTest {
     }
 
     @Test
-    public void testAcceptNotMatchedResource() throws Exception {
-        final java.io.File configFile = temporaryFolder.newFile("coverage.txt");
-        final PrintWriter writer = new PrintWriter(configFile);
-        writer.println("src/java/net/example/Foo.java;[1-20]");
-        writer.close();
-
-        final Configuration configuration = Mockito.mock(Configuration.class);
-        Mockito.when(configuration.getString(IgnoreCoverageDecorator.CONFIG_FILE)).thenReturn(configFile.getAbsolutePath());
-
-        final IgnoreCoverageMeasurementFilter filter = new IgnoreCoverageMeasurementFilter(configuration);
-
-        final File file = File.create("src/java/net/example/Bar.java");
-        Assert.assertTrue("non matching file", filter.accept(file, new Measure(CoreMetrics.COVERAGE, 42.0)));
-    }
-
-    @Test
     public void testAcceptAllLines() throws Exception {
         final java.io.File configFile = temporaryFolder.newFile("coverage.txt");
         final PrintWriter writer = new PrintWriter(configFile);
@@ -96,8 +80,6 @@ public class IgnoreCoverageMeasurementFilterTest {
         Assert.assertTrue("don't filter directories", filter.accept(directory, null));
     }
 
-
-
     @Test
     public void testAcceptNotFilteredMetric() throws Exception {
         final Configuration configuration = Mockito.mock(Configuration.class);
@@ -111,14 +93,36 @@ public class IgnoreCoverageMeasurementFilterTest {
     }
 
     @Test
+    public void testAcceptNotMatchedResource() throws Exception {
+        final java.io.File configFile = temporaryFolder.newFile("coverage.txt");
+        final PrintWriter writer = new PrintWriter(configFile);
+        writer.println("src/java/net/example/Foo.java;[1-20]");
+        writer.close();
+
+        final Configuration configuration = Mockito.mock(Configuration.class);
+        Mockito.when(configuration.getString(IgnoreCoverageDecorator.CONFIG_FILE)).thenReturn(configFile.getAbsolutePath());
+
+        final IgnoreCoverageMeasurementFilter filter = new IgnoreCoverageMeasurementFilter(configuration);
+
+        final File file = File.create("src/java/net/example/Bar.java");
+        Assert.assertTrue("non matching file", filter.accept(file, new Measure(CoreMetrics.COVERAGE, 42.0)));
+    }
+
+    @Test
     public void testRewrite() throws Exception {
         final Configuration configuration = Mockito.mock(Configuration.class);
         final IgnoreCoverageMeasurementFilter filter = new IgnoreCoverageMeasurementFilter(configuration);
 
         final Set<Integer> lines = Collections.emptySet();
+        // unit test
         filter.rewrite(new Measure(CoreMetrics.COVERAGE, 42.0), lines);
         filter.rewrite(new Measure(CoreMetrics.CONDITIONS_BY_LINE, 42.0), lines);
         filter.rewrite(new Measure(CoreMetrics.COVERED_CONDITIONS_BY_LINE, 42.0), lines);
         filter.rewrite(new Measure(CoreMetrics.COVERAGE_LINE_HITS_DATA, 42.0), lines);
+        // integration test
+        filter.rewrite(new Measure(CoreMetrics.IT_COVERAGE, 42.0), lines);
+        filter.rewrite(new Measure(CoreMetrics.IT_CONDITIONS_BY_LINE, 42.0), lines);
+        filter.rewrite(new Measure(CoreMetrics.IT_COVERED_CONDITIONS_BY_LINE, 42.0), lines);
+        filter.rewrite(new Measure(CoreMetrics.IT_COVERAGE_LINE_HITS_DATA, 42.0), lines);
     }
 }

@@ -58,6 +58,7 @@ public class IgnoreCoverageDecorator implements Decorator {
 
     static {
         final Set<Metric> consumedMetrics = new HashSet<>();
+        // unit test coverage
         consumedMetrics.add(CoreMetrics.CONDITIONS_BY_LINE);
         consumedMetrics.add(CoreMetrics.CONDITIONS_TO_COVER);
         consumedMetrics.add(CoreMetrics.COVERAGE);
@@ -67,6 +68,16 @@ public class IgnoreCoverageDecorator implements Decorator {
         consumedMetrics.add(CoreMetrics.LINE_COVERAGE);
         consumedMetrics.add(CoreMetrics.UNCOVERED_CONDITIONS);
         consumedMetrics.add(CoreMetrics.UNCOVERED_LINES);
+        // integration test coverage
+        consumedMetrics.add(CoreMetrics.IT_CONDITIONS_BY_LINE);
+        consumedMetrics.add(CoreMetrics.IT_CONDITIONS_TO_COVER);
+        consumedMetrics.add(CoreMetrics.IT_COVERAGE);
+        consumedMetrics.add(CoreMetrics.IT_COVERAGE_LINE_HITS_DATA);
+        consumedMetrics.add(CoreMetrics.IT_COVERED_CONDITIONS_BY_LINE);
+        consumedMetrics.add(CoreMetrics.IT_LINES_TO_COVER);
+        consumedMetrics.add(CoreMetrics.IT_LINE_COVERAGE);
+        consumedMetrics.add(CoreMetrics.IT_UNCOVERED_CONDITIONS);
+        consumedMetrics.add(CoreMetrics.IT_UNCOVERED_LINES);
         CONSUMED_METRICS = Collections.unmodifiableSet(consumedMetrics);
     }
 

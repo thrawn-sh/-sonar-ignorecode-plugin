@@ -70,7 +70,7 @@ public class ModifyMeasuresTest {
         Mockito.when(context.getMeasure(CoreMetrics.CONDITIONS_BY_LINE)).thenReturn(total);
         Mockito.when(context.getMeasure(CoreMetrics.COVERED_CONDITIONS_BY_LINE)).thenReturn(covered);
 
-        final Map<String, Map<Integer, Integer>> result = modifyMeasures.filterConditionsData(context, toSet(2, 3));
+        final Map<String, Map<Integer, Integer>> result = modifyMeasures.filterConditionsData(context, CoreMetrics.CONDITIONS_BY_LINE, toSet(2, 3));
         Assert.assertEquals("CONDITIONS_BY_LINE", parse("1=2;4=4"), result.get(ModifyMeasures.TOTAL_CONDITIONS));
         Assert.assertEquals("CONDITIONS_BY_LINE", "1=2;4=4", total.getData());
         Assert.assertEquals("COVERED_CONDITIONS_BY_LINE", parse("1=1;4=2"), result.get(ModifyMeasures.COVERED_CONDITIONS));
@@ -82,7 +82,7 @@ public class ModifyMeasuresTest {
         final DecoratorContext context = Mockito.mock(DecoratorContext.class);
         Mockito.when(context.getMeasure(CoreMetrics.CONDITIONS_BY_LINE)).thenReturn(null);
 
-        final Map<String, Map<Integer, Integer>> conditionsData = modifyMeasures.filterConditionsData(context, toSet());
+        final Map<String, Map<Integer, Integer>> conditionsData = modifyMeasures.filterConditionsData(context, CoreMetrics.CONDITIONS_BY_LINE, toSet());
         Assert.assertNull("no CONDITIONS_BY_LINE", conditionsData);
     }
 
@@ -92,7 +92,7 @@ public class ModifyMeasuresTest {
         final DecoratorContext context = Mockito.mock(DecoratorContext.class);
         Mockito.when(context.getMeasure(CoreMetrics.COVERAGE_LINE_HITS_DATA)).thenReturn(measure);
 
-        final Map<Integer, Integer> result = modifyMeasures.filterLinesData(context, toSet(2, 3));
+        final Map<Integer, Integer> result = modifyMeasures.filterLinesData(context, CoreMetrics.COVERAGE_LINE_HITS_DATA, toSet(2, 3));
         Assert.assertEquals("LINE_COVERAGE", parse("1=2;4=2"), result);
         Assert.assertEquals("LINE_COVERAGE", "1=2;4=2", measure.getData());
     }
@@ -102,7 +102,7 @@ public class ModifyMeasuresTest {
         final DecoratorContext context = Mockito.mock(DecoratorContext.class);
         Mockito.when(context.getMeasure(CoreMetrics.COVERAGE_LINE_HITS_DATA)).thenReturn(null);
 
-        final Map<Integer, Integer> lineData = modifyMeasures.filterLinesData(context, toSet());
+        final Map<Integer, Integer> lineData = modifyMeasures.filterLinesData(context, CoreMetrics.COVERAGE_LINE_HITS_DATA, toSet());
         Assert.assertNull("no LINE_COVERAGE", lineData);
     }
 
@@ -112,7 +112,7 @@ public class ModifyMeasuresTest {
         final DecoratorContext context = Mockito.mock(DecoratorContext.class);
         Mockito.when(context.getMeasure(CoreMetrics.CONDITIONS_TO_COVER)).thenReturn(measure);
 
-        final long result = modifyMeasures.rewriteConditionsCountTotal(context, conditionData);
+        final long result = modifyMeasures.rewriteConditionsCountTotal(context, CoreMetrics.CONDITIONS_TO_COVER, conditionData);
         Assert.assertEquals("CONDITIONS_TO_COVER", 6L, result);
         Assert.assertEquals("CONDITIONS_TO_COVER", 6.0, measure.getValue(), DELTA);
     }
@@ -123,7 +123,7 @@ public class ModifyMeasuresTest {
         final DecoratorContext context = Mockito.mock(DecoratorContext.class);
         Mockito.when(context.getMeasure(CoreMetrics.UNCOVERED_CONDITIONS)).thenReturn(measure);
 
-        final long result = modifyMeasures.rewriteConditionsCountUncovered(context, conditionData);
+        final long result = modifyMeasures.rewriteConditionsCountUncovered(context, CoreMetrics.UNCOVERED_CONDITIONS, conditionData);
         Assert.assertEquals("CONDITIONS_TO_COVER", 3L, result);
         Assert.assertEquals("CONDITIONS_TO_COVER", 3.0, measure.getValue(), DELTA);
     }
@@ -134,11 +134,11 @@ public class ModifyMeasuresTest {
         final DecoratorContext context = Mockito.mock(DecoratorContext.class);
         Mockito.when(context.getMeasure(CoreMetrics.BRANCH_COVERAGE)).thenReturn(measure);
 
-        final double result = modifyMeasures.rewriteConditionsCoveragePercentage(context, 200L, 30L);
+        final double result = modifyMeasures.rewriteConditionsCoveragePercentage(context, CoreMetrics.BRANCH_COVERAGE, 200L, 30L);
         Assert.assertEquals("LINE_COVERAGE", 85.0, result, DELTA);
         Assert.assertEquals("LINE_COVERAGE", 85.0, measure.getValue(), DELTA);
 
-        final double zero = modifyMeasures.rewriteConditionsCoveragePercentage(context, 0L, 30L);
+        final double zero = modifyMeasures.rewriteConditionsCoveragePercentage(context, CoreMetrics.BRANCH_COVERAGE, 0L, 30L);
         Assert.assertEquals("LINE_COVERAGE", 0.0, zero, DELTA);
         Assert.assertEquals("LINE_COVERAGE", 0.0, measure.getValue(), DELTA);
     }
@@ -150,7 +150,7 @@ public class ModifyMeasuresTest {
         Mockito.when(context.getMeasure(CoreMetrics.LINES_TO_COVER)).thenReturn(measure);
 
         final Map<Integer, Integer> lineData = parse("1=2;2=2;3=0;4=2");
-        final long result = modifyMeasures.rewriteLinesCountTotal(context, lineData);
+        final long result = modifyMeasures.rewriteLinesCountTotal(context, CoreMetrics.LINES_TO_COVER, lineData);
         Assert.assertEquals("LINE_COVERAGE", 4L, result);
         Assert.assertEquals("LINE_COVERAGE", 4.0, measure.getValue(), DELTA);
     }
@@ -162,7 +162,7 @@ public class ModifyMeasuresTest {
         Mockito.when(context.getMeasure(CoreMetrics.UNCOVERED_LINES)).thenReturn(measure);
 
         final Map<Integer, Integer> lineData = parse("1=1;2=1;3=0;4=1");
-        final long result = modifyMeasures.rewriteLinesCountUncovered(context, lineData);
+        final long result = modifyMeasures.rewriteLinesCountUncovered(context, CoreMetrics.UNCOVERED_LINES, lineData);
         Assert.assertEquals("UNCOVERED_LINES", 1L, result);
         Assert.assertEquals("UNCOVERED_LINES", 1.0, measure.getValue(), DELTA);
     }
@@ -173,11 +173,11 @@ public class ModifyMeasuresTest {
         final DecoratorContext context = Mockito.mock(DecoratorContext.class);
         Mockito.when(context.getMeasure(CoreMetrics.LINE_COVERAGE)).thenReturn(measure);
 
-        final double result = modifyMeasures.rewriteLinesCoveragePercentage(context, 200L, 30L);
+        final double result = modifyMeasures.rewriteLinesCoveragePercentage(context, CoreMetrics.LINE_COVERAGE, 200L, 30L);
         Assert.assertEquals("LINE_COVERAGE", 85.0, result, DELTA);
         Assert.assertEquals("LINE_COVERAGE", 85.0, measure.getValue(), DELTA);
 
-        final double zero = modifyMeasures.rewriteLinesCoveragePercentage(context, 0L, 30L);
+        final double zero = modifyMeasures.rewriteLinesCoveragePercentage(context, CoreMetrics.LINE_COVERAGE, 0L, 30L);
         Assert.assertEquals("LINE_COVERAGE", 0.0, zero, DELTA);
         Assert.assertEquals("LINE_COVERAGE", 0.0, measure.getValue(), DELTA);
     }
@@ -188,15 +188,15 @@ public class ModifyMeasuresTest {
         final DecoratorContext context = Mockito.mock(DecoratorContext.class);
         Mockito.when(context.getMeasure(CoreMetrics.COVERAGE)).thenReturn(measure);
 
-        final double result = modifyMeasures.rewriteOverallCoverage(context, 200L, 30L, 50L, 20L);
+        final double result = modifyMeasures.rewriteOverallCoverage(context, CoreMetrics.COVERAGE, 200L, 30L, 50L, 20L);
         Assert.assertEquals("COVERAGE", 80.0, result, DELTA);
         Assert.assertEquals("COVERAGE", 80.0, measure.getValue(), DELTA);
 
-        final double zeroBranch = modifyMeasures.rewriteOverallCoverage(context, 200L, 30L, 0L, 0L);
+        final double zeroBranch = modifyMeasures.rewriteOverallCoverage(context, CoreMetrics.COVERAGE, 200L, 30L, 0L, 0L);
         Assert.assertEquals("COVERAGE", 85.0, zeroBranch, DELTA);
         Assert.assertEquals("COVERAGE", 85.0, measure.getValue(), DELTA);
 
-        final double noCoverage = modifyMeasures.rewriteOverallCoverage(context, 0L, 0L, 0L, 0L);
+        final double noCoverage = modifyMeasures.rewriteOverallCoverage(context, CoreMetrics.COVERAGE, 0L, 0L, 0L, 0L);
         Assert.assertEquals("COVERAGE", 0.0, noCoverage, DELTA);
         Assert.assertEquals("COVERAGE", 0.0, measure.getValue(), DELTA);
     }
