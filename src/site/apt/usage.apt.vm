@@ -1,0 +1,160 @@
+#*
+ * This file is part of Sonar Ignore Code Plugin.
+ *
+ * Sonar Ignore Code Plugin is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * Sonar Ignore Code Plugin is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with Sonar Ignore Code Plugin.  If not, see <http://www.gnu.org/licenses/>.
+ *#
+ ------
+ Usage
+ ------
+ Shadowhunt
+ ------
+
+Usage
+    
+    * {{Plugin Installation}}
+
+    * {{Project Configuration}}
+
+    * {{Coverage Ignore File}}
+
+    * {{Violation Ignore File}}
+
+* {Plugin Installation}
+
+    To install the ${project.name} into your
+    {{{http://www.sonarsource.com}SonarSource}} or
+    {{{http://www.sonarqube.org}SonarQube}} {{{./download.html}download}} the
+    matching plugin version (plugin version X.Y.* can be used with sonar
+    version X.Y.*).
+
+    After downlading the matching version, copy the plugin jar to the
+    extensions/plugins folder of your sonar installation. Make sure to remove
+    any older versions of this plugin. Afterwards restart sonar.
+
+* {Project Configuration}
+
+    The ${project.name} will try to load the project specific issue and coverage
+    filter files during sonar analysis. For maven projects it will search for
+    the <<sonar.ignorecoverage.configFile>> respectively
+    <<sonar.ignoreviolation.configFile>> properties. So your pom file will
+    have to look something like this:
+
++-----+
+<project>
+    ...
+    <properties>
+        <sonar.ignorecoverage.configFile>coverage.ignore</sonar.ignorecoverage.configFile>
+        <sonar.ignoreviolations.configFile>violations.ignore</sonar.ignoreviolations.configFile>
+    </properties>
+    ...
+</project>
++-----+
+
+* {Coverage Ignore File}
+
+    In the coverage ignore file, blank lines are ignored and lines starting
+    with \# are interpreded as commend and therefore also ignored. All
+    other lines have to have the following syntax:
+
+    <<resources;lines>>
+
+    <<resources>>: follows the well known ant matching syntax
+
+    <<lines>>: can be * for all lines, [10] for the single line 10,
+    [20-25] for a line range starting at 20 (included) and ending at 25
+    (included) or a combination of both eg. [10,20-25,30]
+
++-----+
+# comment
+
+# class Foo must not be covered at all
+src/java/net/example/Foo.java;*
+
+# class Bar must not be covered at betwenn line 10 to 20 and at line 25
+src/java/net/example/Foo.java;[10-20,25]
+
+# class in gen packages must not be covered at all
+src/java/net/example/**/gen/*.java;*
++-----+
+
+    Please not also you can specifiy all lines on the same resources on
+    different entries it's highly recommended to specifiy a resource only on
+    time:
+
+    working but discouraged:
+
++-----+
+src/java/net/example/Foo.java;[10-18]
+src/java/net/example/Foo.java;[19]
+src/java/net/example/Foo.java;[20]
+src/java/net/example/Foo.java;[25]
++-----+
+
+    better write as:
+
++-----+
+src/java/net/example/Foo.java;[10-20,25]
++-----+
+
+* {Violation Ignore File}
+
+    In the violation ignore file, blank lines are ignored and lines starting
+    with \# are interpreded as commend and therefore also ignored. All other
+    lines have to have the following syntax:
+
+    <<resources;issues;lines>>
+
+    <<resources>>: follows the well known ant matching syntax
+
+    <<issues>>: can be * for any issue or a for pattern of violations (eg.
+    pmd:*) or a specific violation (eg. squid:S1210). The issue patterns use
+    the repository id and the issue key and can be found in the quality profile
+    of your sonar installation.
+
+    <<lines>>: can be * for all lines, [10] for the single line 10,
+    [20-25] for a line range starting at 20 (included) and ending at 25
+    (included) or a combination of both eg. [10,20-25,30]
+
++-----+
+# comment
+
+# ignore all violations in class Foo
+src/java/net/example/Foo.java;*;*
+
+# ignore all violations in class Bar betwenn line 10 to 20 and at line 25
+src/java/net/example/Bar.java;*;[10-20,25]
+
+# ignore specific violations on various lines of class FooBar
+src/java/net/example/FooBar.java;pmd:*;[10-20]
+src/java/net/example/FooBar.java;squid:S1210;[25]
++-----+
+
+    Please not also you can specifiy all lines on the same resources and issue
+    on different entries it's highly recommended to specifiy a resource only on
+    time:
+
+    working but discouraged:
+
++-----+
+src/java/net/example/Foo.java;*;[10-18]
+src/java/net/example/Foo.java;*;[19]
+src/java/net/example/Foo.java;*;[20]
+src/java/net/example/Foo.java;*;[25]
++-----+
+
+    better write as:
+
++-----+
+src/java/net/example/Foo.java;*;[10-20,25]
++-----+
