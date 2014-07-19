@@ -32,7 +32,7 @@
 
     <body>
         <breadcrumbs>
-            <item name="Shadowhunt" href="//dev.shadowhunt.de/" />
+            <item name="Shadowhunt" href="https://dev.shadowhunt.de/" />
             <item name="Sonar Ignore Code Plugin" href="index.html" />
         </breadcrumbs>
 
