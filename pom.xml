@@ -77,7 +77,7 @@
         </snapshotRepository>
         <site>
             <id>shadowhunt.site</id>
-            <url>scp://dev.shadowhunt.de/sites/sonarignore-maven-plugin</url>
+            <url>scp://dev.shadowhunt.de/sites/sonar-ignorecode-plugin</url>
         </site>
     </distributionManagement>
     <!-- }}}1 -->
