@@ -100,7 +100,7 @@ public class ModifyMeasures {
         removeIgnores(conditionsByLine, lines);
 
         final String filteredData = KeyValueFormat.format(conditionsByLine, CONVERTER, CONVERTER);
-        LOGGER.warn("updating {} ({} to {})", measure.getMetricKey(), originalData, filteredData);
+        LOGGER.info("updating {} ({} to {})", measure.getMetricKey(), originalData, filteredData);
         measure.setData(filteredData);
         return conditionsByLine;
     }
