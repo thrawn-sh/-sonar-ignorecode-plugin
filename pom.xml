@@ -22,7 +22,7 @@
     <groupId>de.shadowhunt.sonar.plugins</groupId>
     <artifactId>sonar-ignorecode-plugin</artifactId>
     <packaging>sonar-plugin</packaging>
-    <version>4.3.1</version>
+    <version>4.3.2-SNAPSHOT</version>
 
     <!-- project information {{{1 -->
     <name>Sonar Ignore Code Plugin</name>
