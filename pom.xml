@@ -58,7 +58,7 @@
         <tag>HEAD</tag>
         <connection>scm:git:https://scm.shadowhunt.de/sonar-ignorecode-plugin</connection>
         <developerConnection>scm:git:https://scm.shadowhunt.de/sonar-ignorecode-plugin</developerConnection>
-        <url>https://scm.shadowhunt.de/sonar-ignorecode-plugin</url>
+        <url>https://github.com/thrawn-sh/sonar-ignore</url>
     </scm>
 
     <prerequisites>
